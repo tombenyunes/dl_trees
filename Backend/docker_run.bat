@@ -1,0 +1,1 @@
+docker run --shm-size=2g --gpus all -it --rm -v %cd%:/scratch --workdir=/scratch -e HOME=/scratch sg2ada:latest %*
