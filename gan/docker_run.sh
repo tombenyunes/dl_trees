@@ -30,7 +30,7 @@ IMAGE="${IMAGE:-sg2ada:latest}"
 
 CONTAINER_ID=$(docker inspect --format="{{.Id}}" ${IMAGE} 2> /dev/null)
 if [[ "${CONTAINER_ID}" ]]; then
-    docker run --shm-size=2g --gpus all --rm -v /home/jonah/dev/final_project/gan/stylegan2-ada-pytorch:/scratch --user $(id -u):$(id -g) \
+    docker run --shm-size=2g --gpus all --rm -v /home/jonah/dev/final_project:/scratch --user $(id -u):$(id -g) \
         --workdir=/scratch -e HOME=/scratch $IMAGE $@
 else
     echo "Unknown container image: ${IMAGE}"
