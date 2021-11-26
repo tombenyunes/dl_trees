@@ -35,20 +35,24 @@
 
 **Instructions**
 
-`git clone https://gitlab.doc.gold.ac.uk/tbeny001/final_project`
+```
+git clone https://gitlab.doc.gold.ac.uk/tbeny001/final_project
 
-`cd final_project`
+cd final_project
 
-`git submodule update --init`
+git submodule update --init
 
-`docker build --tag sg2ada:latest ./gan/stylegan2-ada-pytorch`
+sudo docker build --tag sg2ada:latest ./gan/stylegan2-ada-pytorch (remove sudo on windows)
 
-`npm install ./backend/site`
+npm install ./backend/site
 
-Download model from https://drive.google.com/file/d/1wEthBUvAKimz8A-0H-awBWvjjzh_ln0b/view?usp=sharing and place in ./gan/models
+# Download model from https://drive.google.com/file/d/1wEthBUvAKimz8A-0H-awBWvjjzh_ln0b/view?usp=sharing and place in ./gan/models
 
-`node ./backend/site/index.js`
+# Must be called from project root
+node ./backend/site/index.js
 
-Visit localhost:8000/api and refresh for a new image. (Please note the first load will take a little while)
+# Visit localhost:8000/api and refresh for a new image
+# Please note the first load will take a little while. Avoid refreshing the page while loading
+```
 
 ---
