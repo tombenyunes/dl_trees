@@ -35,14 +35,15 @@
 
 **Instructions**
 
-```
+```.bash
 git clone https://gitlab.doc.gold.ac.uk/tbeny001/final_project
 
 cd final_project
 
 git submodule update --init
 
-sudo docker build --tag sg2ada:latest ./gan/stylegan2-ada-pytorch (remove sudo on windows)
+# remove sudo if on windows
+sudo docker build --tag sg2ada:latest ./gan/stylegan2-ada-pytorch
 
 npm install ./backend/site
 
