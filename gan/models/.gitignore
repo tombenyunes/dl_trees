@@ -1,2 +1,2 @@
-# models are too large to store on github
+# Models are too large to store on github (300MB+)
 *.pkl
