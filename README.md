@@ -42,7 +42,7 @@ cd final_project
 
 git submodule update --init
 
-# remove sudo if on windows
+# Remove sudo if on windows
 sudo docker build --tag sg2ada:latest ./gan/stylegan2-ada-pytorch
 
 npm install ./backend/site
@@ -53,9 +53,9 @@ Download model [here](https://drive.google.com/file/d/1wEthBUvAKimz8A-0H-awBWvjj
 ```.bash
 # Must be called from project root
 node ./backend/site/index.js
-
-# Visit localhost:8000/api and refresh for a new image
-# Please note the first load will take a little while. Avoid refreshing the page while loading
 ```
+
+Visit localhost:8000/api and refresh for a new image.  
+Please note the initial load will take a little while. Avoid refreshing the page while loading.
 
 ---
