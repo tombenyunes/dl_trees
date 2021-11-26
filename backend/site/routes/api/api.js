@@ -31,7 +31,7 @@ module.exports = function (app)
         // linux, mac
         else
         {
-            let generate_image = exec(path.join(__dirname + './../../scripts/generate_image.sh',
+            let generate_image = exec(path.join(__dirname + './../../scripts/generate_image.sh'),
                 (error, stdout, stderr) => {
                     console.log(stdout);
                     console.log(stderr);
