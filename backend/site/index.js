@@ -2,8 +2,7 @@ const express = require('express');
 const app = express();
 const port = 8000;
 
-// routing
-// only an api route will be needed
+// API route
 require('./routes/api/api')(app);
 
-app.listen(port, () => console.log(`site listening on port ${port}!`))
+app.listen(port, () => console.log(`Node Running -> Port: ${port} <-`))
