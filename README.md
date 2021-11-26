@@ -1,7 +1,7 @@
 
 **Project Structure**
 
-[/GAN](https://github.com/tombenyunes/final_project/tree/main/gan)
+[/GAN](https://gitlab.doc.gold.ac.uk/tbeny001/final_project/-/tree/main/gan)
 
 - Contains:
 
@@ -15,7 +15,7 @@
 
 	- Shell and batch scripts for running docker containers
 
-[/Backend](https://github.com/tombenyunes/final_project/tree/main/backend)
+[/Backend](https://gitlab.doc.gold.ac.uk/tbeny001/final_project/-/tree/main/backend)
 
 - A Node API that exposes functionality to generated randomly seeded images.
 
@@ -48,5 +48,7 @@
 Download model from https://drive.google.com/file/d/1wEthBUvAKimz8A-0H-awBWvjjzh_ln0b/view?usp=sharing and place in ./gan/models
 
 `node ./backend/site/index.js`
+
+Visit localhost:8000/api and refresh for a new image. (Please note the first load will take a little while)
 
 ---
