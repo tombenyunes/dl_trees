@@ -46,9 +46,11 @@ git submodule update --init
 sudo docker build --tag sg2ada:latest ./gan/stylegan2-ada-pytorch
 
 npm install ./backend/site
+```
 
-# Download model from https://drive.google.com/file/d/1wEthBUvAKimz8A-0H-awBWvjjzh_ln0b/view?usp=sharing and place in ./gan/models
+Download model [here](https://drive.google.com/file/d/1wEthBUvAKimz8A-0H-awBWvjjzh_ln0b/view?usp=sharing) and place in ./gan/models
 
+```.bash
 # Must be called from project root
 node ./backend/site/index.js
 
