@@ -4,7 +4,7 @@ const fs = require('fs');
 
 module.exports = function (app)
 {
-    app.get('/api/', function (req, res)
+    app.get('/', function (req, res)
     {
         // Windows
         if (process.platform == "win32") // win32 applies to 64-bit too
