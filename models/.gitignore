@@ -1,0 +1,2 @@
+# Models are too large to store on github (300MB+)
+*.pth
