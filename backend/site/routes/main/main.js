@@ -32,20 +32,41 @@ module.exports = function (app)
         // Linux, Mac
         else
         {
-            let generate_image = exec('sh ./backend/site/scripts/generate_image.sh',
+            let generate_image = exec('sh /scratch/backend/site/scripts/generate_image.sh',
                 (error, stdout, stderr) => {
                     console.log(stdout);
                     console.log(stderr);
                     if (error !== null) console.log(`exec error: ${error}`);
+                    console.log("---------- generated image from stylegan ----------")
                 });
             
             generate_image.on('exit', function() {
-                let dir = path.join(__dirname + '/../../../../gan/output/');
-                let files = fs.readdirSync(dir);
-                setTimeout(() => {
-                    res.sendFile(dir + files[0]);
-                }, 1);
+
+                // let dir = path.join(__dirname + '/../../../../gan/output/');
+                // let files = fs.readdirSync(dir);
+                // setTimeout(() => {
+                //     res.sendFile(dir + files[0]);
+                // }, 1);
+                // console.log(files.length)
+
+                let detect_image = exec('sh /scratch/detectron/detect_image.sh',
+                (error, stdout, stderr) => {
+                    console.log(stdout);
+                    console.log(stderr);
+                    if (error !== null) console.log(`exec error: ${error}`);
+                    console.log("---------- removed background from image ----------")
+                });
             })
+            
+            // generate_image.on('exit', function() {
+            //     let dir = path.join(__dirname + '/../../../../gan/output/');
+            //     let files = fs.readdirSync(dir);
+            //     setTimeout(() => {
+            //         res.sendFile(dir + files[0]);
+            //     }, 1);
+            // })
+
+            res.send("...")
         }
     });
 

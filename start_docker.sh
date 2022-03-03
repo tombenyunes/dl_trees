@@ -1,5 +1,7 @@
-# start the docker container, install latest node, and start server
+# start the docker container and run node server
 
-bash ./gan/docker_run.sh node ./backend/site/index.js;
-# bash ./gan/docker_run.sh python3 ./backend/site/scripts/TreeRecognition.py
-# bash ./gan/docker_run.sh pip list | grep torch
+# bash ./gan/docker_run.sh node ./backend/site/index.js;
+# bash ./detectron/docker_run.sh node ./backend/site/index.js;
+bash ./detectron/docker_run.sh sudo sh /scratch/backend/site/scripts/start_server.sh
+# bash ./detectron/docker_run.sh sudo sh /scratch/backend/site/scripts/generate_image.sh
+# bash ./detectron/docker_run.sh python3 /scratch/backend/site/scripts/TreeRecognition.py

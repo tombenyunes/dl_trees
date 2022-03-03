@@ -124,8 +124,8 @@ predictor = DefaultPredictor(cfg)
 
 
 
-inference_input_dir = "/scratch/_input/_stylegan/"
-inference_output_dir = "/scratch/_output/_detectron/using_stylegan_background_input_data/first_pass/"
+inference_input_dir = "/scratch/gan/output/"
+inference_output_dir = "/scratch/detectron/output/"
 
 os.makedirs(inference_output_dir, exist_ok=True)
 
@@ -210,4 +210,35 @@ for img in os.listdir(inference_input_dir):
     print("no tree found")
     v2 = v.draw_instance_predictions(outputs["instances"].to("cpu"))
     img = v2.get_image()
-    cv2_imshow(img)
+    # cv2_imshow(img)
+
+
+
+
+
+from PIL import Image
+
+input_dir = "/scratch/detectron/output/"
+output_dir = "/scratch/detectron/output/"
+
+os.makedirs(output_dir, exist_ok=True)
+
+for img in os.listdir(input_dir):
+  image_name = img
+  print(image_name[:-4])
+  # img = cv2.imread(os.path.join(input_dir, img))
+  img = Image.open(os.path.join(input_dir, img))
+  # img = Image.open('reals.png')
+  rgba = img.convert("RGBA")
+  datas = rgba.getdata()
+    
+  newData = []
+  for item in datas:
+      if item[0] == 255 and item[1] == 255 and item[2] == 255:
+          newData.append((255, 255, 255, 0))
+          # newData.append((255, 0, 0))
+      else:
+          newData.append(item)
+    
+  rgba.putdata(newData)
+  rgba.save(output_dir + image_name[:-4] + ".png")

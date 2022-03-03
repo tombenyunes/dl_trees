@@ -9,12 +9,6 @@ docker run \
     --shm-size=8gb \
     --env="DISPLAY" \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+    --network=host \
     --name=detectron2 detectron2:v0 \
-    python3 /scratch/backend/site/scripts/TreeRecognition.py
-    # sudo sh /scratch/backend/site/scripts/generate_image.sh
-    # -it \
-    # node ./backend/site/index.js
-    # pip list | grep torch
-
-# docker run --shm-size=2g --gpus all --rm -v `pwd`:/scratch --user $(id -u):$(id -g) \
-#         --workdir=/scratch -e HOME=/scratch --network=host $IMAGE $@
+    $@
