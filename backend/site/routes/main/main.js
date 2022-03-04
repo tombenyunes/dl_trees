@@ -41,14 +41,6 @@ module.exports = function (app)
                 });
             
             generate_image.on('exit', function() {
-
-                // let dir = path.join(__dirname + '/../../../../gan/output/');
-                // let files = fs.readdirSync(dir);
-                // setTimeout(() => {
-                //     res.sendFile(dir + files[0]);
-                // }, 1);
-                // console.log(files.length)
-
                 let detect_image = exec('sh /scratch/detectron/detect_image.sh',
                 (error, stdout, stderr) => {
                     console.log(stdout);
@@ -56,6 +48,16 @@ module.exports = function (app)
                     if (error !== null) console.log(`exec error: ${error}`);
                     console.log("---------- removed background from image ----------")
                 });
+
+                detect_image.on('exit', function() {
+                    let stylize_image = exec('sh /scratch/pyxelate/stylize_image.sh',
+                        (error, stdout, stderr) => {
+                            console.log(stdout);
+                            console.log(stderr);
+                            if (error !== null) console.log(`exec error: ${error}`);
+                            console.log("---------- stylized image with pyxelate ----------")
+                        });
+                })
             })
             
             // generate_image.on('exit', function() {
@@ -65,7 +67,6 @@ module.exports = function (app)
             //         res.sendFile(dir + files[0]);
             //     }, 1);
             // })
-
             res.send("...")
         }
     });

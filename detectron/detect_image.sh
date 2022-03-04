@@ -10,4 +10,4 @@ fi
 find /scratch/detectron/output/ -maxdepth 1 -type f -delete
 
 # detect tree
-python3 /scratch/backend/site/scripts/TreeRecognition.py
+python3 /scratch/detectron/TreeRecognition.py
