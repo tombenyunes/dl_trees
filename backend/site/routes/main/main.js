@@ -6,6 +6,11 @@ module.exports = function (app)
 {
     app.get('/', function (req, res)
     {
+        res.render('main.html')
+    });
+
+    app.post('/', function (req, res)
+    {
         // Windows
         if (process.platform == "win32") // win32 applies to 64-bit too
         {
@@ -29,7 +34,7 @@ module.exports = function (app)
             })
         }
 
-        // Linux, Mac
+        // Linux/Mac
         else
         {
             let generate_image = exec('sh /scratch/backend/site/scripts/generate_image.sh',
@@ -56,6 +61,14 @@ module.exports = function (app)
                             console.log(stderr);
                             if (error !== null) console.log(`exec error: ${error}`);
                             console.log("---------- stylized image with pyxelate ----------")
+                            
+                            // let dir = path.join('/scratch/pyxelate/output/');
+                            // let files = fs.readdirSync(dir);
+                            // setTimeout(() => {
+                            //     res.sendFile(dir + files[0]);
+                            // }, 1);
+
+                            res.sendFile('/scratch/backend/site/views/main.html')
                         });
                 })
             })
@@ -67,7 +80,7 @@ module.exports = function (app)
             //         res.sendFile(dir + files[0]);
             //     }, 1);
             // })
-            res.send("...")
+            // res.sendFile('/scratch/backend/site/views/main.html')
         }
     });
 

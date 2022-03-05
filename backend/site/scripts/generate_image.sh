@@ -17,6 +17,6 @@ python3 /scratch/gan/stylegan2-ada-pytorch/generate.py \
     --outdir=/scratch/gan/output \
     --trunc=1 \
 	--network=/scratch/gan/models/network-snapshot-000000.pkl \
-	--seeds=${r}-$(($r + 10))
-	# --seeds=${r}
+	--seeds=${r}
+	# --seeds=${r}-$(($r + 100))
 	# --seeds=1-10

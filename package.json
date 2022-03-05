@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "ejs": "^3.1.6",
     "site": "file:backend/site"
   }
 }
