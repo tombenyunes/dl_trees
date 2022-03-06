@@ -42,5 +42,5 @@ for i in range(len(image_arr)):
   new_image = new_palette.transform(image_arr[i])
   
   print(image_names[i])
-  # io.imsave(output_dir + image_names[i], new_image)
-  io.imsave(output_dir + "tree.png", new_image)
+  io.imsave(output_dir + image_names[i], new_image)
+  # io.imsave(output_dir + "tree.png", new_image)
