@@ -6,6 +6,7 @@ const { finished } = require('stream');
 const t  = require('../../scripts/timer.js');
 
 let generating_images = false;
+let stylizing_images = false;
 
 module.exports = function (app)
 {
@@ -48,7 +49,7 @@ module.exports = function (app)
         // Linux/Mac
         else
         {
-            let dir = path.join('/scratch/pyxelate/output/');
+            let dir = path.join('/scratch/detectron/output/');
             let files = fs.readdirSync(dir);
 
             if (files.length <= 10 && !generating_images)
@@ -64,7 +65,8 @@ module.exports = function (app)
                     console.log("---------- generated image from stylegan ----------")
                 });
             
-                generate_image.on('exit', function() {
+                generate_image.on('exit', function()
+                {
                     let detect_image = exec('sh /scratch/detectron/detect_image.sh',
                     (error, stdout, stderr) => {
                         console.log(stdout);
@@ -73,32 +75,35 @@ module.exports = function (app)
                         console.log("---------- removed background from image ----------")
                     });
     
-                    detect_image.on('exit', function() {
-                        let stylize_image = exec('sh /scratch/pyxelate/stylize_image.sh',
-                            (error, stdout, stderr) => {
-                                console.log(stdout);
-                                console.log(stderr);
-                                if (error !== null) console.log(`exec error: ${error}`);
-                                console.log("---------- stylized image with pyxelate ----------")
-                                
-                                generate_images = false;
+                    detect_image.on('exit', function()
+                    {
+                        generate_images = false;
 
-                                // let dir = path.join('/scratch/pyxelate/output/');
-                                // let files = fs.readdirSync(dir);
-                                // setTimeout(() => {
-                                //     res.sendFile(dir + files[0]);
-                                // }, 1);
-    
-                                // res.sendFile('/scratch/backend/site/views/main.html', { image_name: files[0] })
-                                // res.render('main.html', { image_name: "tree.png" })
-                            });
+                    //     let stylize_image = exec('sh /scratch/pyxelate/stylize_image.sh',
+                    //         (error, stdout, stderr) => {
+                    //             console.log(stdout);
+                    //             console.log(stderr);
+                    //             if (error !== null) console.log(`exec error: ${error}`);
+                    //             console.log("---------- stylized image with pyxelate ----------")
+                    //         });
                     })
                 })
             }
 
-            
 
-            if (t.complete)
+            // if (!stylizing_images)
+            // {
+            //     stylizing_images = true;
+
+            let stylize_image = exec('sh /scratch/pyxelate/stylize_image.sh',
+                (error, stdout, stderr) => {
+                    console.log(stdout);
+                    console.log(stderr);
+                    if (error !== null) console.log(`exec error: ${error}`);
+                    console.log("---------- stylized image with pyxelate ----------")
+                });
+            
+            stylize_image.on('exit', function()
             {
                 if (files.length > 0)
                 {
@@ -110,23 +115,45 @@ module.exports = function (app)
                             console.log("---------- deleted image  ----------")
                         })
                 }
-
-                setTimeout(() =>
-                {
-                    res.render('main.html', { image_name: files[1] })
-                    t.complete = false;
-                }, 1);
-            }
-            else 
-            {
+        
                 res.render('main.html', { image_name: files[0] })
-            }
+            });
 
-            setTimeout(() =>
-            {
-                t.complete = true;
-                console.log("timer_complete");
-            }, 3000)
+            //         stylizing_images = false;
+            //     });
+            // }
+
+
+            
+            // if (t.complete)
+            // {
+                // if (files.length > 0)
+                // {
+                //     let delete_image = exec('sudo rm $file_name', {env: {'file_name': dir + files[0]}},
+                //         (error, stdout, stderr) => {
+                //             console.log(stdout);
+                //             console.log(stderr);
+                //             if (error !== null) console.log(`exec error: ${error}`);
+                //             console.log("---------- deleted image  ----------")
+                //         })
+                // }
+
+                // setTimeout(() =>
+                // {
+                //     res.render('main.html', { image_name: files[1] })   // send second file because the list of files in the dir hasn't been updated yet
+                //     t.complete = false;
+                // }, 1);
+            // }
+            // else 
+            // {
+            //     res.render('main.html', { image_name: files[0] })
+            // }
+
+            // setTimeout(() =>
+            // {
+            //     t.complete = true;
+            //     console.log("timer_complete");
+            // }, 3000)
 
             
             

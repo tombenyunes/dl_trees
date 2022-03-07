@@ -11,12 +11,12 @@ os.makedirs(output_dir, exist_ok=True)
 
 images = [os.path.join(root, filename)
           for root, dirs, files in os.walk(input_dir)
-          for filename in files
+          for filename in sorted(files)
           if filename.lower().endswith('.png')]
 
 image_names = [os.path.join(filename)
           for root, dirs, files in os.walk(input_dir)
-          for filename in files
+          for filename in sorted(files)
           if filename.lower().endswith('.png')]
 
 image_arr = []
@@ -26,10 +26,10 @@ for img in images:
 passed = False
 
 # new_palette = Pyx(factor=7, palette=Pal.from_rgb([[139, 69, 19], [255, 255, 255], [144, 238, 144]]), dither="naive").fit(image_arr[i])
-new_palette = Pyx(factor=7, palette=8, dither="naive", depth=1).fit(io.imread('/scratch/pyxelate/palettes/seed0006.png'))    # 0006
+# new_palette = Pyx(factor=7, palette=8, dither="naive", depth=1).fit(io.imread('/scratch/pyxelate/palettes/seed0006.png'))    # 0006
 
-for i in range(len(image_arr)):
-  # new_palette = Pyx(factor=7, palette=8, dither="naive").fit(image_arr[i])
+# for i in range(len(image_arr)):
+new_palette = Pyx(factor=7, palette=8, dither="naive").fit(image_arr[0])
 
   # if (image_names[i]=='seed0006.png'):
   #   passed = True
@@ -39,8 +39,8 @@ for i in range(len(image_arr)):
   #   new_palette = Pyx(factor=7, palette=Pal.from_rgb([[0, 255, 0], [0, 0, 0], [139, 69, 19]]), dither="naive").fit(image_arr[i])
 
   # new_image = Pyx(factor=8, palette=Pal.MICROSOFT_WINDOWS_PAINT, dither="none").fit_transform(image_arr[i])
-  new_image = new_palette.transform(image_arr[i])
-  
-  print(image_names[i])
-  io.imsave(output_dir + image_names[i], new_image)
+new_image = new_palette.transform(image_arr[0])
+
+print(image_names[0])
+io.imsave(output_dir + image_names[0], new_image)
   # io.imsave(output_dir + "tree.png", new_image)
