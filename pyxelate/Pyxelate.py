@@ -1,4 +1,6 @@
 import os
+import sys
+import json
 import numpy as np
 
 from skimage import io
@@ -9,6 +11,13 @@ output_dir = "/scratch/pyxelate/output/"
 
 os.makedirs(output_dir, exist_ok=True)
 
+# remove all images in output directory
+for f in os.listdir(output_dir):
+    if not f.endswith(".png"):
+        continue
+    os.remove(os.path.join(output_dir, f))
+
+# create array of images and image names in input dir
 images = [os.path.join(root, filename)
           for root, dirs, files in os.walk(input_dir)
           for filename in sorted(files)
@@ -23,13 +32,25 @@ image_arr = []
 for img in images:
     image_arr.append(io.imread(img))
 
-passed = False
+# passed = False
+
+
+f = open('/scratch/backend/site/config.json')
+
+data = json.load(f)
+r = int(data['resolution'])
+print(r)
+
+f.close()
+
 
 # new_palette = Pyx(factor=7, palette=Pal.from_rgb([[139, 69, 19], [255, 255, 255], [144, 238, 144]]), dither="naive").fit(image_arr[i])
-# new_palette = Pyx(factor=7, palette=8, dither="naive", depth=1).fit(io.imread('/scratch/pyxelate/palettes/seed0006.png'))    # 0006
+new_palette = Pyx(factor=r, palette=8, dither="naive", depth=1).fit(io.imread('/scratch/pyxelate/palettes/seed0006.png'))    # 0006
+
+# print("resolution: " + sys.argv[1])
 
 # for i in range(len(image_arr)):
-new_palette = Pyx(factor=7, palette=8, dither="naive").fit(image_arr[0])
+# new_palette = Pyx(factor=7, palette=8, dither="naive").fit(image_arr[0])
 
   # if (image_names[i]=='seed0006.png'):
   #   passed = True

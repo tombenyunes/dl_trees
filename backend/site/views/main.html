@@ -5,13 +5,20 @@
 	<title>GenerativeTrees</title>
 </head>
 
-<body id = "body">
+<body>
 
 	<form method="POST" action="/" id="mainForm">
+		
+		<label for="resolution"> Resolution </label>
+		<input type="range" min="4" max="8" value="<%= current_resolution %>" id="resolution" name="resolution">
+
+
 		<input type="submit" value="Generate Tree" style=
 		   "display: block;
 			margin-left: auto;
-			margin-right: auto;"
+			margin-right: auto;
+			margin-bottom: 50px;
+			margin-top: 50px;"
 		/>
 	</form>
 

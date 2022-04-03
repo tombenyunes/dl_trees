@@ -1,9 +1,13 @@
 const express = require('express');
+const bodyParser = require('body-parser');
+
 const app = express();
 const port = 8000;
 
 // public image dir
 app.use(express.static('/scratch/pyxelate/output/'))
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // routes
 require('./routes/main/main')(app);

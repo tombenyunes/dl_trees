@@ -49,17 +49,25 @@ RUN pip install -e ./detectron2/ --upgrade
 
 # scikit-image > v17 requires python 3.7
 RUN sudo apt-get install -y python3.7
-RUN python3.7 --version
 
 # reinstall pip3 so it works with python3.7
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python3.7 get-pip.py --force-reinstall
 
-RUN pip3 --version
-
 RUN pip3 install numba
 RUN pip3 install -U scikit-learn
 RUN pip3 install -U scikit-image
+
+# RUN pip uninstall -y numpy
+# RUN python3 -m pip uninstall -y numpy
+# # RUN python3.6 -m pip uninstall -y numpy
+# # RUN pip3.7 uninstall -y numpy
+# RUN sudo apt purge -y python-numpy
+# RUN sudo apt purge -y python3-numpy
+# RUN sudo apt purge -y python3.6-numpy
+# RUN sudo apt purge -y python3-numpy
+# # RUN pip3 install --upgrade pip
+# RUN pip3 install -U numpy
 
 RUN pip3 install git+https://github.com/sedthh/pyxelate.git
 
