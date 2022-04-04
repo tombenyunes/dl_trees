@@ -4,16 +4,40 @@ const fs = require('fs');
 const { finished } = require('stream');
 
 let generating_images = false;
+let is_generating = false;
+
+
+function update_generating_status()
+{
+    let generating;
+
+    fs.readFile('/scratch/backend/site/config.json', 'utf8', (err, data) =>
+    {
+        if (err) {
+            console.log(`Error read file: ${err}`);
+        } else {
+            // console.log(`File is read successfully`);
+        }
+
+        const config_data = JSON.parse(data);
+
+        is_generating = config_data.generating;
+        console.log(is_generating);
+    })
+}
+
 
 module.exports = function (app)
 {
     app.get('/', function (req, res)
     {
+        update_generating_status();
+
         let dir = path.join('/scratch/pyxelate/output/');
         let files = fs.readdirSync(dir);
         setTimeout(() =>
         {
-            res.render('main.html', { image_name: files[0], current_resolution: 50 })
+            res.render('main.html', { image_name: files[0], current_resolution: 4 })
         }, 1);
     });
 
@@ -81,9 +105,11 @@ module.exports = function (app)
                     })
                 }
 
+
                 let config = 
                 {
-                    resolution: req.body.resolution
+                    resolution: req.body.resolution,
+                    generating: false
                 }
 
                 fs.writeFile('/scratch/backend/site/config.json', JSON.stringify(config), 'utf8', (err) => 
@@ -91,12 +117,23 @@ module.exports = function (app)
                     if (err) {
                         console.log(`Error writing file: ${err}`);
                     } else {
-                        console.log(`File is written successfully!`);
+                        // console.log(`File is written successfully`);
                     }
+
+                    fs.chmod('/scratch/backend/site/config.json', 0o777, (err) =>
+                    {
+                        if (err) {
+                            console.log(`Error writing file: ${err}`);
+                        } else {
+                            // console.log(`File permissions changed successfully`);
+                        }
+                    });
                 })
 
-                // let stylize_image = exec('sh /scratch/pyxelate/stylize_image.sh',
-                // let stylize_image = exec('python3.7 /scratch/pyxelate/Pyxelate.py $resolution', {env: {'resolution': 1}},
+
+                update_generating_status();
+
+
                 let stylize_image = exec('python3.7 /scratch/pyxelate/Pyxelate.py',
                     (error, stdout, stderr) => {
                         console.log(stdout);

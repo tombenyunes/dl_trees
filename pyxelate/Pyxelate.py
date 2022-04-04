@@ -6,6 +6,28 @@ import numpy as np
 from skimage import io
 from pyxelate import Pyx, Pal
 
+config_resolution = 4 # fallback resolution value
+
+
+def process_config(generating):
+  f = open('/scratch/backend/site/config.json')
+  read_data = json.load(f)
+
+  config_resolution = int(read_data['resolution'])
+  read_data['generating'] = generating
+
+  f.close()
+
+  serialized_data = json.dumps(read_data)
+
+  with open('/scratch/backend/site/config.json', "w") as outfile:
+    outfile.write(serialized_data)
+
+
+
+process_config(True)
+
+
 input_dir = '/scratch/detectron/output/'
 output_dir = "/scratch/pyxelate/output/"
 
@@ -35,17 +57,9 @@ for img in images:
 # passed = False
 
 
-f = open('/scratch/backend/site/config.json')
-
-data = json.load(f)
-r = int(data['resolution'])
-print(r)
-
-f.close()
-
 
 # new_palette = Pyx(factor=7, palette=Pal.from_rgb([[139, 69, 19], [255, 255, 255], [144, 238, 144]]), dither="naive").fit(image_arr[i])
-new_palette = Pyx(factor=r, palette=8, dither="naive", depth=1).fit(io.imread('/scratch/pyxelate/palettes/seed0006.png'))    # 0006
+new_palette = Pyx(factor=config_resolution, palette=8, dither="naive", depth=1).fit(io.imread('/scratch/pyxelate/palettes/seed0006.png'))    # 0006
 
 # print("resolution: " + sys.argv[1])
 
@@ -65,3 +79,7 @@ new_image = new_palette.transform(image_arr[0])
 print(image_names[0])
 io.imsave(output_dir + image_names[0], new_image)
   # io.imsave(output_dir + "tree.png", new_image)
+
+
+
+process_config(False)
