@@ -111,27 +111,37 @@ module.exports = function (app)
 
                 if (!generating_images)
                 {
-                    if (files.length <= 10)
+                    if (files.length <= 20)
                     {
-                        // console.log("---------- generating images ----------")
+                        console.log("---------- Refilling image buffer ----------")
                         generating_images = true;
+                        let stylegan_start_seconds = Date.now() / 1000;
 
-                        let generate_image = exec('sh /scratch/backend/site/scripts/generate_image.sh',
+                        let generate_image = exec('python3 /scratch/backend/site/scripts/generate_image.py',
                         (error, stdout, stderr) => {
                             console.log(stdout);
                             console.log(stderr);
                             if (error !== null) console.log(`exec error: ${error}`);
-                            console.log("---------- generated image from stylegan ----------")
+
+                            let seconds_diff = Math.round(((Date.now() / 1000) - stylegan_start_seconds) * 10) / 10;
+                            console.log("---------- Generated images in " + seconds_diff + " seconds ----------")
                         });
                     
                         generate_image.on('exit', function()
                         {
-                            let detect_image = exec('sh /scratch/detectron/detect_image.sh',
+                            let detectron_start_seconds = Date.now() / 1000;
+
+                            let detect_image = exec('python3 /scratch/detectron/TreeRecognition.py',
                             (error, stdout, stderr) => {
                                 console.log(stdout);
                                 console.log(stderr);
                                 if (error !== null) console.log(`exec error: ${error}`);
-                                console.log("---------- removed background from image ----------")
+
+                                seconds_diff = Math.round(((Date.now() / 1000) - detectron_start_seconds) * 10) / 10;
+                                console.log("---------- Prepared images in " + seconds_diff + " seconds ----------")
+
+                                seconds_diff = Math.round(((Date.now() / 1000) - stylegan_start_seconds) * 10) / 10;
+                                console.log("---------- Image buffer refill completed in " + seconds_diff + " seconds ----------")
                                 
                                 generating_images = false;
                             });
@@ -149,12 +159,16 @@ module.exports = function (app)
 
                 write_config_file(req.body.resolution);
 
+                let pyxelate_start_seconds = Date.now() / 1000;
+
                 let stylize_image = exec('python3.7 /scratch/pyxelate/Pyxelate.py',
                     (error, stdout, stderr) => {
                         console.log(stdout);
                         console.log(stderr);
                         if (error !== null) console.log(`exec error: ${error}`);
-                        // console.log("---------- stylized image with pyxelate ----------")
+                        
+                        let seconds_diff = Math.round(((Date.now() / 1000) - pyxelate_start_seconds) * 10) / 10;
+                        console.log("---------- Stylized image with Pyxelate in " + seconds_diff + " seconds ----------")
                     });
                 
                 stylize_image.on('exit', function()

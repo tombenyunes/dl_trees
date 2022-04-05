@@ -7,7 +7,7 @@ if [ ! -d "/scratch/detectron/output" ]; then
 	mkdir /scratch/detectron/output
 fi
 
-# find /scratch/detectron/output/ -maxdepth 1 -type f -delete
+find /scratch/detectron/buffer/ -maxdepth 1 -type f -delete
 
 # detect tree
 python3 /scratch/detectron/TreeRecognition.py

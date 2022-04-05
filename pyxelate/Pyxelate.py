@@ -7,8 +7,6 @@ from skimage import io
 from pyxelate import Pyx, Pal
 
 
-print("Stylizing Tree")
-
 # config_resolution = 4 # fallback resolution value
 input_dir = "/scratch/detectron/output/"
 output_dir = "/scratch/pyxelate/output/"
@@ -69,7 +67,6 @@ read_input_images(input_dir)
 # passed = False
 
 
-print(config_resolution)
 # new_palette = Pyx(factor=7, palette=Pal.from_rgb([[139, 69, 19], [255, 255, 255], [144, 238, 144]]), dither="naive").fit(input_image_arr[i])
 new_palette = Pyx(factor=config_resolution, palette=8, dither="naive", depth=1).fit(io.imread('/scratch/pyxelate/palettes/seed0006.png'))    # 0006
 

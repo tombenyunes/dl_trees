@@ -24,11 +24,25 @@ from detectron2.data import MetadataCatalog, DatasetCatalog
 
 
 
+def clear_output_dir(output_dir):
+  os.makedirs(output_dir, exist_ok=True)
+
+  # remove all images in output directory
+  for f in os.listdir(output_dir):
+      if not f.endswith(".png"):
+          continue
+      os.remove(os.path.join(output_dir, f))
+
+
+
 train = False
 train_data_path = "/content/drive/MyDrive/_datasets/_masks/" + "acacia" + "/"
 train_model_dir = "/content/drive/MyDrive/_models/_detectron/" + "acacia" + "/"
 
 saved_model_dir = "/scratch/models/"
+
+
+clear_output_dir("/scratch/detectron/buffer/")
 
 
 
@@ -134,7 +148,7 @@ os.makedirs(inference_output_dir, exist_ok=True)
 
 for img in os.listdir(inference_input_dir):
   image_name = img
-  print(image_name[:-4])
+  # print(image_name[:-4])
   img = cv2.imread(os.path.join(inference_input_dir, img))
 
   outputs = predictor(img)
@@ -181,7 +195,7 @@ for img in os.listdir(inference_input_dir):
         lbuff = int(math.ceil((ysize - xsize) / 2))
         rbuff = int(math.floor((ysize - xsize) / 2))
     else:
-      print("already square")
+      # print("already square")
       tbuff = 0
       bbuff = 0
       lbuff = 0
@@ -225,7 +239,7 @@ os.makedirs(output_dir, exist_ok=True)
 
 for img in os.listdir(input_dir):
   image_name = img
-  print(image_name[:-4])
+  # print(image_name[:-4])
   # img = cv2.imread(os.path.join(input_dir, img))
   img = Image.open(os.path.join(input_dir, img))
   # img = Image.open('reals.png')
