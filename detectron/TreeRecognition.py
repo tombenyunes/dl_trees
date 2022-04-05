@@ -125,7 +125,7 @@ predictor = DefaultPredictor(cfg)
 
 
 inference_input_dir = "/scratch/gan/output/"
-inference_output_dir = "/scratch/detectron/output/"
+inference_output_dir = "/scratch/detectron/buffer/"
 
 os.makedirs(inference_output_dir, exist_ok=True)
 
@@ -218,7 +218,7 @@ for img in os.listdir(inference_input_dir):
 
 from PIL import Image
 
-input_dir = "/scratch/detectron/output/"
+input_dir = "/scratch/detectron/buffer/"
 output_dir = "/scratch/detectron/output/"
 
 os.makedirs(output_dir, exist_ok=True)

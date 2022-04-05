@@ -48,7 +48,7 @@ function update_generating_status()
         const config_data = JSON.parse(data);
 
         is_generating = config_data.generating;
-        console.log("is_generating: " + is_generating);
+        // console.log("is_generating: " + is_generating);
     })
 }
 
@@ -121,7 +121,7 @@ module.exports = function (app)
                             console.log(stdout);
                             console.log(stderr);
                             if (error !== null) console.log(`exec error: ${error}`);
-                            // console.log("---------- generated image from stylegan ----------")
+                            console.log("---------- generated image from stylegan ----------")
                         });
                     
                         generate_image.on('exit', function()
@@ -131,45 +131,47 @@ module.exports = function (app)
                                 console.log(stdout);
                                 console.log(stderr);
                                 if (error !== null) console.log(`exec error: ${error}`);
-                                // console.log("---------- removed background from image ----------")
+                                console.log("---------- removed background from image ----------")
+                                
+                                generating_images = false;
                             });
             
-                            detect_image.on('exit', function()
-                            {
-                                generate_images = false;
-                            })
+                            // detect_image.on('exit', function()
+                            // {
+                            //     console.log("done");
+                            //     generate_images = false;
+                            // })
                         })
                     }
 
 
-                    write_config_file(req.body.resolution);
-
-
-
-                    let stylize_image = exec('python3.7 /scratch/pyxelate/Pyxelate.py',
-                        (error, stdout, stderr) => {
-                            console.log(stdout);
-                            console.log(stderr);
-                            if (error !== null) console.log(`exec error: ${error}`);
-                            // console.log("---------- stylized image with pyxelate ----------")
-                        });
-                    
-                    stylize_image.on('exit', function()
-                    {
-                        if (files.length > 0)
-                        {
-                            let delete_image = exec('sudo rm $file_name', {env: {'file_name': dir + files[0]}},
-                                (error, stdout, stderr) => {
-                                    console.log(stdout);
-                                    console.log(stderr);
-                                    if (error !== null) console.log(`exec error: ${error}`);
-                                    // console.log("---------- deleted image  ----------")
-                                })
-                        }
-                
-                        res.render('main.html', { image_name: files[0], current_resolution: req.body.resolution })
-                    });
                 }
+
+                write_config_file(req.body.resolution);
+
+                let stylize_image = exec('python3.7 /scratch/pyxelate/Pyxelate.py',
+                    (error, stdout, stderr) => {
+                        console.log(stdout);
+                        console.log(stderr);
+                        if (error !== null) console.log(`exec error: ${error}`);
+                        // console.log("---------- stylized image with pyxelate ----------")
+                    });
+                
+                stylize_image.on('exit', function()
+                {
+                    if (files.length > 0)
+                    {
+                        let delete_image = exec('sudo rm $file_name', {env: {'file_name': dir + files[0]}},
+                            (error, stdout, stderr) => {
+                                console.log(stdout);
+                                console.log(stderr);
+                                if (error !== null) console.log(`exec error: ${error}`);
+                                // console.log("---------- deleted image  ----------")
+                            })
+                    }
+            
+                    res.render('main.html', { image_name: files[0], current_resolution: req.body.resolution })
+                });
             }
             else 
             {

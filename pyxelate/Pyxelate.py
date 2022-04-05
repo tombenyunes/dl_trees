@@ -9,7 +9,7 @@ from pyxelate import Pyx, Pal
 
 print("Stylizing Tree")
 
-config_resolution = 4 # fallback resolution value
+# config_resolution = 4 # fallback resolution value
 input_dir = "/scratch/detectron/output/"
 output_dir = "/scratch/pyxelate/output/"
 
@@ -18,6 +18,7 @@ def process_config(generating):
   f = open('/scratch/backend/site/config.json')
   read_data = json.load(f)
 
+  global config_resolution
   config_resolution = int(read_data['resolution'])
   read_data['generating'] = generating
 
@@ -68,7 +69,7 @@ read_input_images(input_dir)
 # passed = False
 
 
-
+print(config_resolution)
 # new_palette = Pyx(factor=7, palette=Pal.from_rgb([[139, 69, 19], [255, 255, 255], [144, 238, 144]]), dither="naive").fit(input_image_arr[i])
 new_palette = Pyx(factor=config_resolution, palette=8, dither="naive", depth=1).fit(io.imread('/scratch/pyxelate/palettes/seed0006.png'))    # 0006
 
