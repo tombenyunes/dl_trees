@@ -17,19 +17,11 @@ function write_config_file(resolution)
 
     fs.writeFile('/scratch/backend/site/config.json', JSON.stringify(config), 'utf8', (err) => 
     {
-        if (err) {
-            console.log(`Error writing file: ${err}`);
-        } else {
-            // console.log(`File is written successfully`);
-        }
+        if (err) console.log(`Error writing file: ${err}`);
 
         fs.chmod('/scratch/backend/site/config.json', 0o777, (err) =>
         {
-            if (err) {
-                console.log(`Error writing file: ${err}`);
-            } else {
-                // console.log(`File permissions changed successfully`);
-            }
+            if (err) console.log(`Error writing file: ${err}`);
         });
     })
 }
@@ -39,16 +31,17 @@ function update_generating_status()
 {
     fs.readFile('/scratch/backend/site/config.json', 'utf8', (err, data) =>
     {
-        if (err) {
-            console.log(`Error read file: ${err}`);
-        } else {
-            // console.log(`File is read successfully`);
+        if (err) console.log(`Error read file: ${err}`);
+
+        try
+        {
+            const config_data = JSON.parse(data);
+            is_generating = config_data.generating;
         }
-
-        const config_data = JSON.parse(data);
-
-        is_generating = config_data.generating;
-        // console.log("is_generating: " + is_generating);
+        catch (error)
+        {
+            is_generating = false;
+        }
     })
 }
 
@@ -145,12 +138,6 @@ module.exports = function (app)
                                 
                                 generating_images = false;
                             });
-            
-                            // detect_image.on('exit', function()
-                            // {
-                            //     console.log("done");
-                            //     generate_images = false;
-                            // })
                         })
                     }
 
@@ -180,7 +167,6 @@ module.exports = function (app)
                                 console.log(stdout);
                                 console.log(stderr);
                                 if (error !== null) console.log(`exec error: ${error}`);
-                                // console.log("---------- deleted image  ----------")
                             })
                     }
             

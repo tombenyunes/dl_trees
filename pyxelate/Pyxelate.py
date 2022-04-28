@@ -19,6 +19,7 @@ def process_config(generating):
   global config_resolution
   config_resolution = int(read_data['resolution'])
   read_data['generating'] = generating
+  read_data['resolution'] = read_data['resolution']
 
   f.close()
 
