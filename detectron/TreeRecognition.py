@@ -39,7 +39,7 @@ train = False
 train_data_path = "/content/drive/MyDrive/_datasets/_masks/" + "acacia" + "/"
 train_model_dir = "/content/drive/MyDrive/_models/_detectron/" + "acacia" + "/"
 
-saved_model_dir = "/scratch/models/"
+saved_model_dir = "/scratch/detectron/models/"
 
 
 clear_output_dir("/scratch/detectron/buffer/")
@@ -126,7 +126,7 @@ if (train):
 else:
   cfg.OUTPUT_DIR = saved_model_dir
 
-cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "detectron_final.pth")
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
 cfg.DATASETS.TEST = ("category_test", )
 

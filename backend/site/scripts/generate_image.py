@@ -21,4 +21,4 @@ seed = random.randint(1, 10000)
 
 clear_output_dir(output_dir)
 
-os.system("python3 /scratch/gan/stylegan2-ada-pytorch/generate.py --outdir={out_dir} --trunc=1 --network=/scratch/gan/models/network-snapshot-000000.pkl --seeds={seed_lb}-{seed_ub}".format(out_dir = output_dir, seed_lb = seed, seed_ub = seed+100))
+os.system("python3 /scratch/gan/stylegan2-ada-pytorch/generate.py --outdir={out_dir} --trunc=1 --network=/scratch/gan/models/gan_final.pkl --seeds={seed_lb}-{seed_ub}".format(out_dir = output_dir, seed_lb = seed, seed_ub = seed+100))
