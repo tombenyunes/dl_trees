@@ -4,8 +4,8 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = 8000;
 
-// public image dir
-app.use(express.static('/scratch/pyxelate/output/'))
+app.use(express.static('/scratch/pyxelate/output/'))    // public image dir
+app.use(express.static(__dirname + '/public'));     // css styling
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 

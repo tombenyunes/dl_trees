@@ -3,33 +3,24 @@
 
 <head>
 	<title>GenerativeTrees</title>
+	<link rel="stylesheet" href="css\style.css">
+	
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@700&display=swap" rel="stylesheet"> 
 </head>
 
 <body>
 
+	<img src="<%= image_name %>" alt="Generating next batch of trees." id="generated_image">
+
+
 	<form method="POST" action="/loading" id="mainForm">
-		
-		<label for="resolution"> Resolution </label>
+		<input type="submit" value="Generate Tree" id="generate_button"/>
+
+		<label for="resolution" id="resolution_label"> Resolution </label>
 		<input type="range" min="4" max="8" value="<%= current_resolution %>" id="resolution" name="resolution">
-
-		<input type="submit" value="Generate Tree" style=
-		   "display: block;
-			margin-left: auto;
-			margin-right: auto;
-			margin-bottom: 50px;
-			margin-top: 50px;"
-		/>
 	</form>
-
-	<img src="<%= image_name %>"
-		 alt="Generating next batch of trees."
-		 style=
-		   "image-rendering: pixelated;
-			width: 512px;
-			display: block;
-			margin-left: auto;
-			margin-right: auto;"
-	>
 
 </body>
 

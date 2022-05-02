@@ -1,0 +1,56 @@
+body {
+    background-color: rgb(30, 30, 30);
+    color: #eeeeee;
+    font-family: 'Josefin Sans', sans-serif;
+}
+
+#generated_image {
+    image-rendering: pixelated;
+    width: 512px;
+    display: block;
+    margin-top: 75px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#generate_button {
+    background-color: #2e2e2e;
+    border-radius: 10px;
+    border: 2px double #cccccc;
+    color: #eeeeee;
+    text-align: center;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 24px;
+    padding: 20px;
+    padding-top: 25px;
+    width: auto;
+    height: auto;
+    transition: all 0.5s;
+    cursor: pointer;
+
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 50px;
+    margin-top: 50px;
+}
+#generate_button:hover {
+    background-color: #1e1e1e;
+}
+
+#resolution {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#resolution_label {
+    display:inline-block;
+    font-size: 20px;
+    color: #eeeeee;
+    position:inherit;
+    text-align:center;
+    width:100%;
+    padding-top: 50px;
+    padding-bottom: 15px;
+}
