@@ -18,6 +18,7 @@ def clear_output_dir(output_dir):
 output_dir = "/scratch/gan/output/"
 seed = random.randint(1, 10000)
 # seed = 6900
+# seed = 5027
 
 clear_output_dir(output_dir)
 
