@@ -1,11 +1,166 @@
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const { finished } = require('stream');
+
 
 let generating_images = false;
-let is_generating = false;
+let is_generating_status = false;
 
+let default_resolution = 8;
+
+let gan_output_dir = '/scratch/gan/output/';
+let detectron_output_dir = '/scratch/detectron/output/';
+let pyxelate_output_dir = '/scratch/pyxelate/output/';
+
+let gan_entry_point = 'python3 /scratch/backend/site/scripts/generate_image.py 2> /dev/null';
+let detectron_entry_point = 'python3 /scratch/detectron/TreeRecognition.py 2> /dev/null';
+let pyxelate_entry_point = 'python3.7 /scratch/pyxelate/Pyxelate.py 2> /dev/null';
+
+
+module.exports = function (app)
+{
+    app.get('/', function (req, res)
+    {
+        // don't generate new image when page is reloaded/visited
+        update_generating_status();
+        no_new_image(req, res);
+    });
+
+    // post/redirect/get design pattern to avoid 'confirm form resubmission' when reloading
+    app.post('/loading', function (req, res)
+    {
+        res.redirect(307, '/');
+    })
+
+    app.post('/', function (req, res)
+    {
+        update_generating_status();
+
+        if (!is_generating_status)
+        {
+            let detectron_output_dir_files = fs.readdirSync(detectron_output_dir);
+
+            if (!generating_images && detectron_output_dir_files.length <= 20)
+            {
+                refill_image_buffer();
+            }
+
+            write_config_file(req.body.resolution);
+
+            // if the image buffer contains images, stylize one and send it as a response
+            // otherwise, send previous image as response
+            if (detectron_output_dir_files.length > 0)
+            {
+                log_formatted_message("Started image stylization");
+                stylize_and_send_image(req, res, detectron_output_dir_files[0]);
+            }
+            else
+            {
+                log_formatted_error("Image buffer is empty. Please wait for it to refill.");
+                no_new_image(req, res);
+            }
+        }
+        else 
+        {
+            log_formatted_error("An image is currently being generated. Please try again in a few moments.");
+            no_new_image(req, res);
+        }
+    });
+
+}
+
+function update_generating_status()
+{
+    // read value of 'generating' from config.json file
+    // this refers to if an image is currently being generated
+
+    fs.readFile('/scratch/backend/site/config.json', 'utf8', (err, data) =>
+    {
+        if (err) console.log(`Error read file: ${err}`);
+
+        try
+        {
+            const config_data = JSON.parse(data);
+            is_generating_status = config_data.generating;
+        }
+        catch (error)
+        {
+            is_generating_status = false;
+        }
+    })
+}
+
+function stylize_and_send_image(req, res, stylized_image)
+{
+    let pyxelate_start_seconds = Date.now() / 1000;
+
+    let stylize_image = exec(pyxelate_entry_point, (error, stdout, stderr) =>
+    {
+        if (error !== null) console.log(`exec error: ${error}`);
+        // console.log(`stdout: ${stdout}`);
+        console.log(stderr);
+        
+        let seconds_diff = Math.round(((Date.now() / 1000) - pyxelate_start_seconds) * 10) / 10;
+        log_formatted_message("Stylized image with Pyxelate in " + seconds_diff + " seconds");
+    });
+    
+    // when image stylization is complete
+    stylize_image.on('exit', function()
+    {
+        send_response(req, res, stylized_image)
+
+        // delete previous image
+        let file_to_delete = detectron_output_dir + stylized_image;
+        delete_image(file_to_delete);
+    });
+}
+
+function refill_image_buffer()
+{
+    log_formatted_message("Refilling image buffer");
+    generating_images = true;
+    let stylegan_start_seconds = Date.now() / 1000;
+
+    let generate_image = exec(gan_entry_point, (error, stdout, stderr) =>
+    {
+        if (error !== null) console.log(`exec error: ${error}`);
+        // console.log(`stdout: ${stdout}`);
+        console.log(stderr);
+
+        let seconds_diff = Math.round(((Date.now() / 1000) - stylegan_start_seconds) * 10) / 10;
+        log_formatted_message("Generated images from GAN in " + seconds_diff + " seconds")
+    });
+
+    generate_image.on('exit', function()
+    {
+        let detectron_start_seconds = Date.now() / 1000;
+
+        exec(detectron_entry_point, (error, stdout, stderr) =>
+        {
+            if (error !== null) console.log(`exec error: ${error}`);
+            // console.log(`stdout: ${stdout}`);
+            console.log(stderr);
+
+            seconds_diff = Math.round(((Date.now() / 1000) - detectron_start_seconds) * 10) / 10;
+            log_formatted_message("Removed backgrounds from images in " + seconds_diff + " seconds");
+
+            seconds_diff = Math.round(((Date.now() / 1000) - stylegan_start_seconds) * 10) / 10;
+            log_formatted_message("Image buffer refill completed in " + seconds_diff + " seconds");
+            
+            generating_images = false;
+        });
+    })
+}
+
+function delete_image(file_to_delete)
+{
+    exec('sudo rm $file_name -f', {env: {'file_name': file_to_delete}}, (error, stdout, stderr) =>
+    {
+        if (error !== null) console.log(`exec error: ${error}`);
+        // console.log(`stdout: ${stdout}`);
+        console.log(stderr);
+    });
+}
 
 function write_config_file(resolution)
 {
@@ -26,163 +181,40 @@ function write_config_file(resolution)
     })
 }
 
-
-function update_generating_status()
+function no_new_image(req, res)
 {
-    fs.readFile('/scratch/backend/site/config.json', 'utf8', (err, data) =>
-    {
-        if (err) console.log(`Error read file: ${err}`);
+    // send most recent image
+    let pyxelate_output_dir_files = fs.readdirSync(pyxelate_output_dir);
+    
+    send_response(req, res, pyxelate_output_dir_files[0])
+}
 
-        try
-        {
-            const config_data = JSON.parse(data);
-            is_generating = config_data.generating;
-        }
-        catch (error)
-        {
-            is_generating = false;
-        }
-    })
+function send_response(req, res, tree_asset)
+{
+    // try to get resolution from webpage options, otherwise set to default
+    let resolution;
+    if (req.body.resolution != undefined) resolution = req.body.resolution;
+    else resolution = default_resolution;
+
+    // case for asset not existing is handled in main.html
+    res.render('main.html', { image_name: tree_asset, current_resolution: resolution });
 }
 
 
-module.exports = function (app)
+
+function get_formatted_time()
 {
-    app.get('/', function (req, res)
-    {
-        // write_config_file(6); # to replace config file if corrupted
-        update_generating_status();
+    let d = new Date();
+    d = d.toLocaleTimeString().slice(0, d.toLocaleTimeString().length - 3);
+    return d;
+}
 
-        let dir = path.join('/scratch/pyxelate/output/');
-        let files = fs.readdirSync(dir);
-        setTimeout(() =>
-        {
-            res.render('main.html', { image_name: files[0], current_resolution: 6, generating_status: is_generating })
-        }, 1);
-    });
+function log_formatted_message(message)
+{
+    console.log("(" + get_formatted_time() + ")" + " ---------- " + message + " ----------")
+}
 
-    app.post('/loading', function (req, res)
-    {
-        res.redirect(307, '/');
-    })
-
-    app.post('/', function (req, res)
-    {
-        // Windows
-        if (process.platform == "win32") // win32 applies to 64-bit too
-        {
-            let generate_image = exec(path.join(__dirname + './../../scripts/generate_image.bat'),
-            (error, stdout, stderr) => {
-                console.log(stdout);
-                console.log(stderr);
-                if (error !== null) console.log(`exec error: ${error}`);
-            });
-
-            generate_image.on('exit', function() {
-                let dir = path.join(__dirname + '/../../../../gan/output/');
-                
-                // Find all files in the ./gan/output folder
-                let files = fs.readdirSync(dir);
-
-                // Without a timeout of 1ms+ there is a chance express will try to send a the file before it has been created
-                setTimeout(() =>
-                {
-                    res.sendFile(dir + files[0]); // only ever 1 file in the files array
-                }, 1);
-            })
-        }
-
-        // Linux/Mac
-        else
-        {
-            update_generating_status();
-
-            if (!is_generating)
-            {
-                let dir = path.join('/scratch/detectron/output/');
-                let files = fs.readdirSync(dir);
-
-                if (!generating_images)
-                {
-                    if (files.length <= 20)
-                    {
-                        console.log("---------- Refilling image buffer ----------")
-                        generating_images = true;
-                        let stylegan_start_seconds = Date.now() / 1000;
-
-                        let generate_image = exec('python3 /scratch/backend/site/scripts/generate_image.py',
-                        (error, stdout, stderr) => {
-                            console.log(stdout);
-                            console.log(stderr);
-                            if (error !== null) console.log(`exec error: ${error}`);
-
-                            let seconds_diff = Math.round(((Date.now() / 1000) - stylegan_start_seconds) * 10) / 10;
-                            console.log("---------- Generated images in " + seconds_diff + " seconds ----------")
-                        });
-                    
-                        generate_image.on('exit', function()
-                        {
-                            let detectron_start_seconds = Date.now() / 1000;
-
-                            let detect_image = exec('python3 /scratch/detectron/TreeRecognition.py',
-                            (error, stdout, stderr) => {
-                                console.log(stdout);
-                                console.log(stderr);
-                                if (error !== null) console.log(`exec error: ${error}`);
-
-                                seconds_diff = Math.round(((Date.now() / 1000) - detectron_start_seconds) * 10) / 10;
-                                console.log("---------- Prepared images in " + seconds_diff + " seconds ----------")
-
-                                seconds_diff = Math.round(((Date.now() / 1000) - stylegan_start_seconds) * 10) / 10;
-                                console.log("---------- Image buffer refill completed in " + seconds_diff + " seconds ----------")
-                                
-                                generating_images = false;
-                            });
-                        })
-                    }
-
-
-                }
-
-                write_config_file(req.body.resolution);
-
-                let pyxelate_start_seconds = Date.now() / 1000;
-
-                let stylize_image = exec('python3.7 /scratch/pyxelate/Pyxelate.py',
-                    (error, stdout, stderr) => {
-                        console.log(stdout);
-                        console.log(stderr);
-                        if (error !== null) console.log(`exec error: ${error}`);
-                        
-                        let seconds_diff = Math.round(((Date.now() / 1000) - pyxelate_start_seconds) * 10) / 10;
-                        console.log("---------- Stylized image with Pyxelate in " + seconds_diff + " seconds ----------")
-                    });
-                
-                stylize_image.on('exit', function()
-                {
-                    if (files.length > 0)
-                    {
-                        let delete_image = exec('sudo rm $file_name', {env: {'file_name': dir + files[0]}},
-                            (error, stdout, stderr) => {
-                                console.log(stdout);
-                                console.log(stderr);
-                                if (error !== null) console.log(`exec error: ${error}`);
-                            })
-                    }
-            
-                    res.render('main.html', { image_name: files[0], current_resolution: req.body.resolution })
-                });
-            }
-            else 
-            {
-                let dir = path.join('/scratch/pyxelate/output/');
-                let files = fs.readdirSync(dir);
-                setTimeout(() =>
-                {
-                    res.render('main.html', { image_name: files[0], current_resolution: 6, generating_status: is_generating })
-                }, 1);
-            }
-        }
-    });
-
+function log_formatted_error(message)
+{
+    console.log("(" + get_formatted_time() + ")" + " >>>>>>>>>> " + message + " <<<<<<<<<<")
 }

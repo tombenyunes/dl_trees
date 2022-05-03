@@ -7,7 +7,6 @@ from skimage import io
 from pyxelate import Pyx, Pal
 
 
-# config_resolution = 4 # fallback resolution value
 input_dir = "/scratch/detectron/output/"
 output_dir = "/scratch/pyxelate/output/"
 
@@ -65,13 +64,8 @@ process_config(True)
 read_input_images(input_dir)
 
 
-# passed = False
 
-
-# new_palette = Pyx(factor=7, palette=Pal.from_rgb([[139, 69, 19], [255, 255, 255], [144, 238, 144]]), dither="naive").fit(input_image_arr[i])
 new_palette = Pyx(factor=config_resolution, palette=8, dither="naive", depth=1).fit(io.imread('/scratch/pyxelate/palettes/seed0006.png'))    # 0006
-
-# print("resolution: " + sys.argv[1])
 
 # for i in range(len(input_image_arr)):
 # new_palette = Pyx(factor=7, palette=8, dither="naive").fit(input_image_arr[0])
@@ -86,13 +80,14 @@ new_palette = Pyx(factor=config_resolution, palette=8, dither="naive", depth=1).
   # new_image = Pyx(factor=8, palette=Pal.MICROSOFT_WINDOWS_PAINT, dither="none").fit_transform(input_image_arr[i])
 
 
-new_image = new_palette.transform(input_image_arr[0])
+# if there is an image available to be stylized
+if (len(input_image_arr) > 0):
+  new_image = new_palette.transform(input_image_arr[0])
 
-
-# print(input_image_names[0])
-clear_output_dir(output_dir)
-io.imsave(output_dir + input_image_names[0], new_image)
-  # io.imsave(output_dir + "tree.png", new_image)
+  clear_output_dir(output_dir)
+  io.imsave(output_dir + input_image_names[0], new_image)
+else:
+  print("Image buffer appears to be empty. Please reload shortly, or restart the server.")
 
 
 
