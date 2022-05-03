@@ -48,7 +48,7 @@ sudo docker build --tag sg2ada:latest ./gan/stylegan2-ada-pytorch
 npm install ./backend/site
 ```
 
-Download model [here](https://drive.google.com/file/d/1wEthBUvAKimz8A-0H-awBWvjjzh_ln0b/view?usp=sharing) and place in ./gan/models
+Download the gan model [here](https://drive.google.com/file/d/1ZtJD0Rw0W36YV0dr4viDRr-wzQ6B87pd/view?usp=sharing) and the detectron model [here](https://drive.google.com/file/d/1OR_9EnyjhWV2QMo8-OHW7fz5BpSPbLFZ/view?usp=sharing) and place both in ./gan/models/ and ./detectron/models/ respectively
 
 ```.bash
 # Must be called from project root
