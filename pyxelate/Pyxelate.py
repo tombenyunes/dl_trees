@@ -34,6 +34,7 @@ def process_config(generating):
   read_data['resolution'] = read_data['resolution']
   read_data['same_seed'] = read_data['same_seed']
   read_data['stylize'] = read_data['stylize']
+  read_data['tailored_palette'] = read_data['tailored_palette']
 
   f.close()
 
@@ -92,7 +93,7 @@ def stylize(image_index):
     print("Image buffer appears to be empty. Please reload shortly, or restart the server.")
 
 
-def copy_unstylized_image():
+def copy_unstylized_image(image_index):
   clear_output_dir(output_dir)
 
   src = os.path.join(input_dir, input_image_names[image_index])
@@ -109,6 +110,6 @@ image_index = 0 if config_same_seed == True else 1
 if (config_stylize == True):
   stylize(image_index)
 else:
-  copy_unstylized_image()
+  copy_unstylized_image(image_index)
 
 process_config(False)

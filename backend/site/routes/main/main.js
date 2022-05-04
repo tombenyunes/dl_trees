@@ -3,14 +3,9 @@ const path = require('path');
 const fs = require('fs');
 
 
-let release_mode = true;
+let release_mode = false;
 
-let config_is_generating = false;
-let config_same_seed = false;
-let config_stylize = true;
-let config_tailored_palette = false;
-
-let generating_images = false;
+let refilling_buffer = false;
 
 let default_resolution = 8;
 
@@ -30,13 +25,18 @@ if (release_mode)
 }
 
 let config_file_path = '/scratch/backend/site/config/config.json';
+let config_is_generating = true;
+let config_same_seed = false;
+let config_stylize = true;
+let config_tailored_palette = false;
+
 
 
 module.exports = function (app)
 {
+    // don't generate new image when page is reloaded/visited, only when form is submitted
     app.get('/', function (req, res)
     {
-        // don't generate new image when page is reloaded/visited
         read_config_file();
         no_new_image(req, res);
     });
@@ -47,20 +47,26 @@ module.exports = function (app)
         res.redirect(307, '/');
     })
 
-    app.post('/', function (req, res)
+    // whenever 'generate tree' button is clicked
+    app.post('/', async function (req, res)
     {
-        read_config_file();
+        // read the current state of the program
+        // don't continue until file has finished being read
+        await read_config_file();
 
+        // update the config file with settings from the html form
+        await write_config_file(req.body.config_resolution, req.body.config_same_seed, req.body.config_stylize, req.body.config_tailored_palette);
+
+        // if an image is NOT currently being generated
         if (!config_is_generating)
         {
+            // get files in output dir
             let detectron_output_dir_files = fs.readdirSync(detectron_output_dir);
 
-            if (!generating_images && detectron_output_dir_files.length <= 20)
-            {
+            // if there are less than 20 images in buffer, refill it (in the background)
+            // ideally this number is just high enough so that the user will never have to wait on the buffer
+            if (!refilling_buffer && detectron_output_dir_files.length <= 20)
                 refill_image_buffer();
-            }
-
-            write_config_file(req.body.resolution, req.body.config_same_seed, req.body.config_stylize, req.body.config_tailored_palette);
 
             // if the image buffer contains images, stylize one and send it as a response
             // otherwise, send previous image as response
@@ -71,14 +77,14 @@ module.exports = function (app)
                 let previous_image = detectron_output_dir_files[0];
                 let cur_image = detectron_output_dir_files[1];
 
-                s = stylize_image(req, res, previous_image, cur_image);
-                
                 // when image stylization is complete
+                s = stylize_image(req, res, previous_image, cur_image);
                 s.on('exit', function()
                 {
+                    // send processed image as response
                     send_response(req, res, (config_same_seed) ? previous_image : cur_image)
 
-                    // delete previous image if not generating same seed
+                    // delete previous image (unless generating with the same seed)
                     if (!config_same_seed)
                     {
                         let file_to_delete = detectron_output_dir + previous_image;
@@ -86,12 +92,14 @@ module.exports = function (app)
                     }
                 });
             }
+            // buffer is empty (hopefully shouldn't occur)
             else
             {
                 log_formatted_error("Image buffer is empty. Please wait for it to refill.");
                 no_new_image(req, res);
             }
         }
+        // if an image is already being generated
         else 
         {
             log_formatted_error("An image is currently being generated. Please try again in a few moments.");
@@ -101,143 +109,167 @@ module.exports = function (app)
 
 }
 
+
+
 function read_config_file()
 {
-    // read value of 'generating' from config.json file
-    // this refers to if an image is currently being generated
+    // read settings and program state from config.json file
+    // the config.json file is modified by other scripts (Pyxelate.py)
 
-    fs.readFile(config_file_path, 'utf8', (err, data) =>
+    return new Promise((resolve, reject) =>
     {
-        if (err) console.log(`Error read file: ${err}`);
+        fs.readFile(config_file_path, 'utf8', (err, data) =>
+        {
+            if (err) console.log(`Error read file: ${err}`);
 
-        try
+            try
+            {
+                const config_data = JSON.parse(data);
+                config_is_generating = config_data.generating;
+                config_same_seed = config_data.same_seed;
+                config_stylize = config_data.stylize;
+                config_tailored_palette = config_data.tailored_palette;
+            }
+            catch (error)
+            {
+                config_is_generating = false;
+                config_same_seed = false;
+                config_stylize = true;
+                config_tailored_palette = false;
+            }
+
+            resolve();
+        });
+    });
+}
+
+function write_config_file(_resolution, _same_seed, _style, _tailored_palette)
+{
+    // write settings from html form into config.json file
+
+    return new Promise((resolve, reject) =>
+    {
+        let resolution = (_resolution == undefined) ? default_resolution : _resolution;
+        let generating = (config_is_generating == undefined) ? false : config_is_generating;
+        let same_seed = (_same_seed == undefined) ? false : true;
+        let stylize = (_style == undefined) ? false : true;
+        let tailored_palette = (_tailored_palette == undefined) ? false : true;
+
+        let config = 
         {
-            const config_data = JSON.parse(data);
-            config_is_generating = config_data.generating;
-            config_same_seed = config_data.same_seed;
-            config_stylize = config_data.stylize;
+            resolution: resolution,
+            generating: generating,
+            same_seed: same_seed,
+            stylize: stylize,
+            tailored_palette: tailored_palette
         }
-        catch (error)
+
+        fs.writeFile(config_file_path, JSON.stringify(config), 'utf8', (err) => 
         {
-            config_is_generating = false;
-            config_same_seed = false;
-            config_stylize = true;
-        }
+            if (err) console.log(`Error writing file: ${err}`);
+
+            fs.chmod(config_file_path, 0o777, (err) =>
+            {
+                if (err) console.log(`Error writing file: ${err}`);
+            });
+        })
+
+        resolve();
+    });
+}
+
+
+
+function no_new_image(req, res)
+{
+    // send most recent image
+    let pyxelate_output_dir_files = fs.readdirSync(pyxelate_output_dir);
+    send_response(req, res, pyxelate_output_dir_files[0])
+}
+
+// all responses pass through here
+function send_response(req, res, tree_asset)
+{
+    // send config settings back into the form so they don't need to be entered every time
+    let resolution;
+    let same_seed;
+    let stylize;
+    let tailored_palette;
+
+    (req.body.config_resolution != undefined) ? resolution = req.body.config_resolution : resolution = default_resolution;
+    (config_same_seed != undefined) ? same_seed = config_same_seed : same_seed = false;
+    (config_stylize != undefined) ? stylize = config_stylize : stylize = true;
+    (config_tailored_palette != undefined) ? tailored_palette = config_tailored_palette : tailored_palette = true;
+
+    // send image name and vars
+    res.render('main.html', { image_name: tree_asset, resolution: resolution, same_seed: same_seed, stylize: stylize, tailored_palette: tailored_palette });
+}
+
+
+
+function refill_image_buffer()
+{
+    log_formatted_message("Refilling image buffer");
+    refilling_buffer = true;
+    let stylegan_start_seconds = get_seconds();
+
+    // generates images from gan
+    let generate_image = exec(gan_entry_point, (error, stdout, stderr) =>
+    {
+        log_standard_stream_and_error_check(error, stdout, stderr)
+        log_formatted_message("Generated images from GAN in " + get_formatted_seconds_since(stylegan_start_seconds) + " seconds")
+    });
+
+    // process gan images with detectron to remove backgrounds
+    generate_image.on('exit', function()
+    {
+        let detectron_start_seconds = get_seconds();
+
+        exec(detectron_entry_point, (error, stdout, stderr) =>
+        {
+            log_standard_stream_and_error_check(error, stdout, stderr)
+            log_formatted_message("Removed backgrounds from images in " + get_formatted_seconds_since(detectron_start_seconds) + " seconds");
+            log_formatted_message("Image buffer refill completed in " + get_formatted_seconds_since(stylegan_start_seconds) + " seconds");
+            
+            refilling_buffer = false;
+        });
     })
 }
 
 function stylize_image(req, res, previous_image, cur_image)
 {
-    let pyxelate_start_seconds = Date.now() / 1000;
-
+    // convert processed gan images into pixel-art
+    let pyxelate_start_seconds = get_seconds();
     let stylize_image = exec(pyxelate_entry_point, (error, stdout, stderr) =>
     {
-        catch_errors(error, stdout, stderr)
-        
-        let seconds_diff = Math.round(((Date.now() / 1000) - pyxelate_start_seconds) * 10) / 10;
-        log_formatted_message("Stylized image with Pyxelate in " + seconds_diff + " seconds");
+        log_standard_stream_and_error_check(error, stdout, stderr)
+        log_formatted_message("Stylized image with Pyxelate in " + get_formatted_seconds_since(pyxelate_start_seconds) + " seconds");
     });
 
     return stylize_image;
-}
-
-function refill_image_buffer()
-{
-    log_formatted_message("Refilling image buffer");
-    generating_images = true;
-    let stylegan_start_seconds = Date.now() / 1000;
-
-    let generate_image = exec(gan_entry_point, (error, stdout, stderr) =>
-    {
-        catch_errors(error, stdout, stderr)
-
-        let seconds_diff = Math.round(((Date.now() / 1000) - stylegan_start_seconds) * 10) / 10;
-        log_formatted_message("Generated images from GAN in " + seconds_diff + " seconds")
-    });
-
-    generate_image.on('exit', function()
-    {
-        let detectron_start_seconds = Date.now() / 1000;
-
-        exec(detectron_entry_point, (error, stdout, stderr) =>
-        {
-            catch_errors(error, stdout, stderr)
-
-            seconds_diff = Math.round(((Date.now() / 1000) - detectron_start_seconds) * 10) / 10;
-            log_formatted_message("Removed backgrounds from images in " + seconds_diff + " seconds");
-
-            seconds_diff = Math.round(((Date.now() / 1000) - stylegan_start_seconds) * 10) / 10;
-            log_formatted_message("Image buffer refill completed in " + seconds_diff + " seconds");
-            
-            generating_images = false;
-        });
-    })
 }
 
 function delete_image(file_to_delete)
 {
     exec('sudo rm $file_name -f', {env: {'file_name': file_to_delete}}, (error, stdout, stderr) =>
     {
-        catch_errors(error, stdout, stderr)
+        log_standard_stream_and_error_check(error, stdout, stderr)
     });
 }
 
-function write_config_file(res, seed, style, tailore)
+
+
+// helper functions - self explanatory
+
+function get_seconds()
 {
-    let resolution = (res == undefined) ? default_resolution : res;
-    let generating = false;
-    let same_seed = (seed == undefined) ? false : true;
-    let stylize = (style == undefined) ? false : true;
-    let tailored_palette = (tailore == undefined) ? false : true;
-
-    let config = 
-    {
-        resolution: resolution,
-        generating: generating,
-        same_seed: same_seed,
-        stylize: stylize,
-        tailored_palette: tailored_palette
-    }
-
-    fs.writeFile(config_file_path, JSON.stringify(config), 'utf8', (err) => 
-    {
-        if (err) console.log(`Error writing file: ${err}`);
-
-        fs.chmod(config_file_path, 0o777, (err) =>
-        {
-            if (err) console.log(`Error writing file: ${err}`);
-        });
-    })
+    return Date.now() / 1000;
 }
 
-function no_new_image(req, res)
+function get_formatted_seconds_since(prev_seconds)
 {
-    // send most recent image
-    let pyxelate_output_dir_files = fs.readdirSync(pyxelate_output_dir);
-    
-    send_response(req, res, pyxelate_output_dir_files[0])
+    return Math.round(((get_seconds()) - prev_seconds) * 10) / 10
 }
-
-function send_response(req, res, tree_asset)
-{
-    // try to get resolution from webpage options, otherwise set to default
-    let resolution;
-    (req.body.resolution != undefined) ? resolution = req.body.resolution : resolution = default_resolution;
-
-    let same_seed;
-    (config_same_seed != undefined) ? same_seed = config_same_seed : same_seed = false;
-
-    let stylize;
-    (config_stylize != undefined) ? stylize = config_stylize : stylize = true;
-
-    let tailored_palette;
-    (config_tailored_palette != undefined) ? tailored_palette = config_tailored_palette : tailored_palette = true;
-
-    // case for asset not existing is handled in main.html
-    res.render('main.html', { image_name: tree_asset, resolution: resolution, same_seed: same_seed, stylize: stylize, tailored_palette: false });
-}
-
-
 
 function get_formatted_time()
 {
@@ -256,9 +288,9 @@ function log_formatted_error(message)
     console.log("(" + get_formatted_time() + ")" + " >>>>>>>>>> " + message + " <<<<<<<<<<")
 }
 
-function catch_errors(error, stdout, stderr)
+function log_standard_stream_and_error_check(error, stdout, stderr)
 {
     if (error !== null) console.log(`exec error: ${error}`);
-        if (!release_mode) console.log(`stdout: ${stdout}`);
-        console.log(stderr);
+    if (!release_mode) console.log(`stdout: ${stdout}`);
+    console.log(stderr);
 }
