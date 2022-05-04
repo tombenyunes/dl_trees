@@ -3,8 +3,10 @@ const path = require('path');
 const fs = require('fs');
 
 
+let config_is_generating = false;
+let config_same_seed = false;
+
 let generating_images = false;
-let is_generating_status = false;
 
 let default_resolution = 8;
 
@@ -16,13 +18,15 @@ let gan_entry_point = 'python3 /scratch/backend/site/scripts/generate_image.py 2
 let detectron_entry_point = 'python3 /scratch/detectron/TreeRecognition.py 2> /dev/null';
 let pyxelate_entry_point = 'python3.7 /scratch/pyxelate/Pyxelate.py 2> /dev/null';
 
+let config_file_path = '/scratch/backend/site/config/config.json';
+
 
 module.exports = function (app)
 {
     app.get('/', function (req, res)
     {
         // don't generate new image when page is reloaded/visited
-        update_generating_status();
+        read_config_file();
         no_new_image(req, res);
     });
 
@@ -34,9 +38,9 @@ module.exports = function (app)
 
     app.post('/', function (req, res)
     {
-        update_generating_status();
+        read_config_file();
 
-        if (!is_generating_status)
+        if (!config_is_generating)
         {
             let detectron_output_dir_files = fs.readdirSync(detectron_output_dir);
 
@@ -45,14 +49,14 @@ module.exports = function (app)
                 refill_image_buffer();
             }
 
-            write_config_file(req.body.resolution);
+            write_config_file(req.body.resolution, (req.body.config_same_seed == undefined) ? false : true);
 
             // if the image buffer contains images, stylize one and send it as a response
             // otherwise, send previous image as response
             if (detectron_output_dir_files.length > 0)
             {
                 log_formatted_message("Started image stylization");
-                stylize_and_send_image(req, res, detectron_output_dir_files[0]);
+                stylize_and_send_image(req, res, detectron_output_dir_files[0], detectron_output_dir_files[1]);
             }
             else
             {
@@ -69,28 +73,30 @@ module.exports = function (app)
 
 }
 
-function update_generating_status()
+function read_config_file()
 {
     // read value of 'generating' from config.json file
     // this refers to if an image is currently being generated
 
-    fs.readFile('/scratch/backend/site/config.json', 'utf8', (err, data) =>
+    fs.readFile(config_file_path, 'utf8', (err, data) =>
     {
         if (err) console.log(`Error read file: ${err}`);
 
         try
         {
             const config_data = JSON.parse(data);
-            is_generating_status = config_data.generating;
+            config_is_generating = config_data.generating;
+            config_same_seed = config_data.same_seed;
         }
         catch (error)
         {
-            is_generating_status = false;
+            config_is_generating = false;
+            config_same_seed = false;
         }
     })
 }
 
-function stylize_and_send_image(req, res, stylized_image)
+function stylize_and_send_image(req, res, previous_image, cur_image)
 {
     let pyxelate_start_seconds = Date.now() / 1000;
 
@@ -107,11 +113,14 @@ function stylize_and_send_image(req, res, stylized_image)
     // when image stylization is complete
     stylize_image.on('exit', function()
     {
-        send_response(req, res, stylized_image)
+        send_response(req, res, (config_same_seed) ? previous_image : cur_image)
 
-        // delete previous image
-        let file_to_delete = detectron_output_dir + stylized_image;
-        delete_image(file_to_delete);
+        // delete previous image if not generating same seed
+        if (!config_same_seed)
+        {
+            let file_to_delete = detectron_output_dir + previous_image;
+            delete_image(file_to_delete);
+        }
     });
 }
 
@@ -162,19 +171,20 @@ function delete_image(file_to_delete)
     });
 }
 
-function write_config_file(resolution)
+function write_config_file(resolution, same_seed)
 {
     let config = 
     {
         resolution: resolution,
-        generating: false
+        generating: false,
+        same_seed: same_seed
     }
 
-    fs.writeFile('/scratch/backend/site/config.json', JSON.stringify(config), 'utf8', (err) => 
+    fs.writeFile(config_file_path, JSON.stringify(config), 'utf8', (err) => 
     {
         if (err) console.log(`Error writing file: ${err}`);
 
-        fs.chmod('/scratch/backend/site/config.json', 0o777, (err) =>
+        fs.chmod(config_file_path, 0o777, (err) =>
         {
             if (err) console.log(`Error writing file: ${err}`);
         });
@@ -193,11 +203,13 @@ function send_response(req, res, tree_asset)
 {
     // try to get resolution from webpage options, otherwise set to default
     let resolution;
-    if (req.body.resolution != undefined) resolution = req.body.resolution;
-    else resolution = default_resolution;
+    (req.body.resolution != undefined) ? resolution = req.body.resolution : resolution = default_resolution;
+
+    let same_seed;
+    (config_same_seed != undefined) ? same_seed = config_same_seed : same_seed = false;
 
     // case for asset not existing is handled in main.html
-    res.render('main.html', { image_name: tree_asset, current_resolution: resolution });
+    res.render('main.html', { image_name: tree_asset, current_resolution: resolution, same_seed: config_same_seed });
 }
 
 

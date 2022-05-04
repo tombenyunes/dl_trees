@@ -10,21 +10,30 @@ from pyxelate import Pyx, Pal
 input_dir = "/scratch/detectron/output/"
 output_dir = "/scratch/pyxelate/output/"
 
+config_file_path = '/scratch/backend/site/config/config.json'
+
+green_palette_path = '/scratch/pyxelate/palettes/seed0006.png'
+orange_palette_path = '/scratch/pyxelate/palettes/seed0852.png'
+
 
 def process_config(generating):
-  f = open('/scratch/backend/site/config.json')
+  f = open(config_file_path)
   read_data = json.load(f)
 
   global config_resolution
   config_resolution = int(read_data['resolution'])
+  global config_same_seed
+  config_same_seed = read_data['same_seed']
+
   read_data['generating'] = generating
   read_data['resolution'] = read_data['resolution']
+  read_data['same_seed'] = read_data['same_seed']
 
   f.close()
 
   serialized_data = json.dumps(read_data)
 
-  with open('/scratch/backend/site/config.json', "w") as outfile:
+  with open(config_file_path, "w") as outfile:
     outfile.write(serialized_data)
 
 def clear_output_dir(output_dir):
@@ -64,28 +73,25 @@ process_config(True)
 read_input_images(input_dir)
 
 
+config_custom_palette = True
 
-new_palette = Pyx(factor=config_resolution, palette=8, dither="naive", depth=1).fit(io.imread('/scratch/pyxelate/palettes/seed0006.png'))    # 0006
+if (config_same_seed == True):
+  image_index = 0;
+else:
+  image_index = 1;
 
-# for i in range(len(input_image_arr)):
-# new_palette = Pyx(factor=7, palette=8, dither="naive").fit(input_image_arr[0])
-
-  # if (input_image_names[i]=='seed0006.png'):
-  #   passed = True
-  #   new_palette = Pyx(factor=7, palette=8, dither="naive").fit(input_image_arr[i])
-
-  # if (passed != True):
-  #   new_palette = Pyx(factor=7, palette=Pal.from_rgb([[0, 255, 0], [0, 0, 0], [139, 69, 19]]), dither="naive").fit(input_image_arr[i])
-
-  # new_image = Pyx(factor=8, palette=Pal.MICROSOFT_WINDOWS_PAINT, dither="none").fit_transform(input_image_arr[i])
+if (config_custom_palette == False):
+  new_palette = Pyx(factor=config_resolution, palette=8, dither="naive", depth=1).fit(io.imread(green_palette_path))
+else:
+  new_palette = Pyx(factor=config_resolution, palette=8, dither="naive").fit(input_image_arr[image_index])
 
 
 # if there is an image available to be stylized
 if (len(input_image_arr) > 0):
-  new_image = new_palette.transform(input_image_arr[0])
+  new_image = new_palette.transform(input_image_arr[image_index])
 
   clear_output_dir(output_dir)
-  io.imsave(output_dir + input_image_names[0], new_image)
+  io.imsave(output_dir + input_image_names[image_index], new_image)
 else:
   print("Image buffer appears to be empty. Please reload shortly, or restart the server.")
 

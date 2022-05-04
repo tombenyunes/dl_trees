@@ -18,6 +18,9 @@
 	<form method="POST" action="/loading" id="mainForm">
 		<input type="submit" value="Generate Tree" id="generate_button"/>
 
+		<label for="config_same_seed" id="config_same_seed_label"> Use same seed </label>
+		<input type="checkbox" id="config_same_seed" name="config_same_seed" value="True" <% if (same_seed) { %> checked <% } %> >
+
 		<label for="resolution" id="resolution_label"> Resolution </label>
 		<input type="range" min="4" max="12" value="<%= current_resolution %>" id="resolution" name="resolution">
 	</form>
