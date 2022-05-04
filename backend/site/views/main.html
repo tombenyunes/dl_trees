@@ -22,7 +22,10 @@
 		<input type="checkbox" id="config_same_seed" name="config_same_seed" value="True" <% if (same_seed) { %> checked <% } %> >
 
 		<label for="resolution" id="resolution_label"> Resolution </label>
-		<input type="range" min="4" max="12" value="<%= current_resolution %>" id="resolution" name="resolution">
+		<input type="range" min="4" max="12" value="<%= resolution %>" id="resolution" name="resolution">
+
+		<label for="config_stylize" id="config_stylize_label"> Stylize </label>
+		<input type="checkbox" id="config_stylize" name="config_stylize" value="True" <% if (stylize) { %> checked <% } %> >
 	</form>
 
 </body>

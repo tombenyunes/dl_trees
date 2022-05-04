@@ -5,6 +5,7 @@ const fs = require('fs');
 
 let config_is_generating = false;
 let config_same_seed = false;
+let config_stylize = true;
 
 let generating_images = false;
 
@@ -16,7 +17,8 @@ let pyxelate_output_dir = '/scratch/pyxelate/output/';
 
 let gan_entry_point = 'python3 /scratch/backend/site/scripts/generate_image.py 2> /dev/null';
 let detectron_entry_point = 'python3 /scratch/detectron/TreeRecognition.py 2> /dev/null';
-let pyxelate_entry_point = 'python3.7 /scratch/pyxelate/Pyxelate.py 2> /dev/null';
+// let pyxelate_entry_point = 'python3.7 /scratch/pyxelate/Pyxelate.py 2> /dev/null';
+let pyxelate_entry_point = 'python3.7 /scratch/pyxelate/Pyxelate.py';
 
 let config_file_path = '/scratch/backend/site/config/config.json';
 
@@ -49,14 +51,31 @@ module.exports = function (app)
                 refill_image_buffer();
             }
 
-            write_config_file(req.body.resolution, (req.body.config_same_seed == undefined) ? false : true);
+            write_config_file(req.body.resolution, (req.body.config_same_seed == undefined) ? false : true, (req.body.config_stylize == undefined) ? false : true);
 
             // if the image buffer contains images, stylize one and send it as a response
             // otherwise, send previous image as response
             if (detectron_output_dir_files.length > 0)
             {
                 log_formatted_message("Started image stylization");
-                stylize_and_send_image(req, res, detectron_output_dir_files[0], detectron_output_dir_files[1]);
+
+                let previous_image = detectron_output_dir_files[0];
+                let cur_image = detectron_output_dir_files[1];
+
+                s = stylize_image(req, res, previous_image, cur_image);
+                
+                // when image stylization is complete
+                s.on('exit', function()
+                {
+                    send_response(req, res, (config_same_seed) ? previous_image : cur_image)
+
+                    // delete previous image if not generating same seed
+                    if (!config_same_seed)
+                    {
+                        let file_to_delete = detectron_output_dir + previous_image;
+                        delete_image(file_to_delete);
+                    }
+                });
             }
             else
             {
@@ -87,41 +106,32 @@ function read_config_file()
             const config_data = JSON.parse(data);
             config_is_generating = config_data.generating;
             config_same_seed = config_data.same_seed;
+            config_stylize = config_data.stylize;
         }
         catch (error)
         {
             config_is_generating = false;
             config_same_seed = false;
+            config_stylize = true;
         }
     })
 }
 
-function stylize_and_send_image(req, res, previous_image, cur_image)
+function stylize_image(req, res, previous_image, cur_image)
 {
     let pyxelate_start_seconds = Date.now() / 1000;
 
     let stylize_image = exec(pyxelate_entry_point, (error, stdout, stderr) =>
     {
         if (error !== null) console.log(`exec error: ${error}`);
-        // console.log(`stdout: ${stdout}`);
+        console.log(`stdout: ${stdout}`);
         console.log(stderr);
         
         let seconds_diff = Math.round(((Date.now() / 1000) - pyxelate_start_seconds) * 10) / 10;
         log_formatted_message("Stylized image with Pyxelate in " + seconds_diff + " seconds");
     });
-    
-    // when image stylization is complete
-    stylize_image.on('exit', function()
-    {
-        send_response(req, res, (config_same_seed) ? previous_image : cur_image)
 
-        // delete previous image if not generating same seed
-        if (!config_same_seed)
-        {
-            let file_to_delete = detectron_output_dir + previous_image;
-            delete_image(file_to_delete);
-        }
-    });
+    return stylize_image;
 }
 
 function refill_image_buffer()
@@ -171,13 +181,14 @@ function delete_image(file_to_delete)
     });
 }
 
-function write_config_file(resolution, same_seed)
+function write_config_file(resolution, same_seed, stylize)
 {
     let config = 
     {
         resolution: resolution,
         generating: false,
-        same_seed: same_seed
+        same_seed: same_seed,
+        stylize: stylize
     }
 
     fs.writeFile(config_file_path, JSON.stringify(config), 'utf8', (err) => 
@@ -208,8 +219,11 @@ function send_response(req, res, tree_asset)
     let same_seed;
     (config_same_seed != undefined) ? same_seed = config_same_seed : same_seed = false;
 
+    let stylize;
+    (config_stylize != undefined) ? stylize = config_stylize : stylize = true;
+
     // case for asset not existing is handled in main.html
-    res.render('main.html', { image_name: tree_asset, current_resolution: resolution, same_seed: config_same_seed });
+    res.render('main.html', { image_name: tree_asset, resolution: resolution, same_seed: same_seed, stylize: stylize });
 }
 
 
