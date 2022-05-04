@@ -21,6 +21,9 @@
 		<label for="config_same_seed" id="config_same_seed_label"> Use same seed </label>
 		<input type="checkbox" id="config_same_seed" name="config_same_seed" value="True" <% if (same_seed) { %> checked <% } %> >
 
+		<label for="config_tailored_palette" id="config_tailored_palette_label"> Tailored Colour Palette </label>
+		<input type="checkbox" id="config_tailored_palette" name="config_tailored_palette" value="True" <% if (tailored_palette) { %> checked <% } %> >
+
 		<label for="resolution" id="resolution_label"> Resolution </label>
 		<input type="range" min="4" max="12" value="<%= resolution %>" id="resolution" name="resolution">
 

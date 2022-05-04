@@ -27,6 +27,8 @@ def process_config(generating):
   config_same_seed = read_data['same_seed']
   global config_stylize
   config_stylize = read_data['stylize']
+  global config_tailored_palette
+  config_tailored_palette = read_data['tailored_palette']
 
   read_data['generating'] = generating
   read_data['resolution'] = read_data['resolution']
@@ -74,7 +76,7 @@ def read_input_images(input_dir):
 
 
 def stylize(image_index):
-  if (config_custom_palette == False):
+  if (config_tailored_palette == False):
     new_palette = Pyx(factor=config_resolution, palette=8, dither="naive", depth=1).fit(io.imread(green_palette_path))
   else:
     new_palette = Pyx(factor=config_resolution, palette=8, dither="naive").fit(input_image_arr[image_index])
@@ -83,22 +85,24 @@ def stylize(image_index):
   # if there is an image available to be stylized
   if (len(input_image_arr) > 0):
     new_image = new_palette.transform(input_image_arr[image_index])
+
+    clear_output_dir(output_dir)
     io.imsave(output_dir + input_image_names[image_index], new_image)
   else:
     print("Image buffer appears to be empty. Please reload shortly, or restart the server.")
 
 
 def copy_unstylized_image():
+  clear_output_dir(output_dir)
+
   src = os.path.join(input_dir, input_image_names[image_index])
   dest = os.path.join(output_dir, input_image_names[image_index])
   shutil.copy(src, dest)
 
 
-config_custom_palette = True
 
 process_config(True)
 read_input_images(input_dir)
-clear_output_dir(output_dir)
 
 image_index = 0 if config_same_seed == True else 1
 

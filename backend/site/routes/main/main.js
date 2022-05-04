@@ -3,9 +3,12 @@ const path = require('path');
 const fs = require('fs');
 
 
+let release_mode = true;
+
 let config_is_generating = false;
 let config_same_seed = false;
 let config_stylize = true;
+let config_tailored_palette = false;
 
 let generating_images = false;
 
@@ -15,10 +18,16 @@ let gan_output_dir = '/scratch/gan/output/';
 let detectron_output_dir = '/scratch/detectron/output/';
 let pyxelate_output_dir = '/scratch/pyxelate/output/';
 
-let gan_entry_point = 'python3 /scratch/backend/site/scripts/generate_image.py 2> /dev/null';
-let detectron_entry_point = 'python3 /scratch/detectron/TreeRecognition.py 2> /dev/null';
-// let pyxelate_entry_point = 'python3.7 /scratch/pyxelate/Pyxelate.py 2> /dev/null';
+let gan_entry_point = 'python3 /scratch/backend/site/scripts/generate_image.py';
+let detectron_entry_point = 'python3 /scratch/detectron/TreeRecognition.py';
 let pyxelate_entry_point = 'python3.7 /scratch/pyxelate/Pyxelate.py';
+
+if (release_mode) 
+{
+    gan_entry_point += ' 2> /dev/null';
+    detectron_entry_point += ' 2> /dev/null';
+    pyxelate_entry_point += ' 2> /dev/null';
+}
 
 let config_file_path = '/scratch/backend/site/config/config.json';
 
@@ -51,7 +60,7 @@ module.exports = function (app)
                 refill_image_buffer();
             }
 
-            write_config_file(req.body.resolution, (req.body.config_same_seed == undefined) ? false : true, (req.body.config_stylize == undefined) ? false : true);
+            write_config_file(req.body.resolution, req.body.config_same_seed, req.body.config_stylize, req.body.config_tailored_palette);
 
             // if the image buffer contains images, stylize one and send it as a response
             // otherwise, send previous image as response
@@ -123,9 +132,7 @@ function stylize_image(req, res, previous_image, cur_image)
 
     let stylize_image = exec(pyxelate_entry_point, (error, stdout, stderr) =>
     {
-        if (error !== null) console.log(`exec error: ${error}`);
-        console.log(`stdout: ${stdout}`);
-        console.log(stderr);
+        catch_errors(error, stdout, stderr)
         
         let seconds_diff = Math.round(((Date.now() / 1000) - pyxelate_start_seconds) * 10) / 10;
         log_formatted_message("Stylized image with Pyxelate in " + seconds_diff + " seconds");
@@ -142,9 +149,7 @@ function refill_image_buffer()
 
     let generate_image = exec(gan_entry_point, (error, stdout, stderr) =>
     {
-        if (error !== null) console.log(`exec error: ${error}`);
-        // console.log(`stdout: ${stdout}`);
-        console.log(stderr);
+        catch_errors(error, stdout, stderr)
 
         let seconds_diff = Math.round(((Date.now() / 1000) - stylegan_start_seconds) * 10) / 10;
         log_formatted_message("Generated images from GAN in " + seconds_diff + " seconds")
@@ -156,9 +161,7 @@ function refill_image_buffer()
 
         exec(detectron_entry_point, (error, stdout, stderr) =>
         {
-            if (error !== null) console.log(`exec error: ${error}`);
-            // console.log(`stdout: ${stdout}`);
-            console.log(stderr);
+            catch_errors(error, stdout, stderr)
 
             seconds_diff = Math.round(((Date.now() / 1000) - detectron_start_seconds) * 10) / 10;
             log_formatted_message("Removed backgrounds from images in " + seconds_diff + " seconds");
@@ -175,20 +178,25 @@ function delete_image(file_to_delete)
 {
     exec('sudo rm $file_name -f', {env: {'file_name': file_to_delete}}, (error, stdout, stderr) =>
     {
-        if (error !== null) console.log(`exec error: ${error}`);
-        // console.log(`stdout: ${stdout}`);
-        console.log(stderr);
+        catch_errors(error, stdout, stderr)
     });
 }
 
-function write_config_file(resolution, same_seed, stylize)
+function write_config_file(res, seed, style, tailore)
 {
+    let resolution = (res == undefined) ? default_resolution : res;
+    let generating = false;
+    let same_seed = (seed == undefined) ? false : true;
+    let stylize = (style == undefined) ? false : true;
+    let tailored_palette = (tailore == undefined) ? false : true;
+
     let config = 
     {
         resolution: resolution,
-        generating: false,
+        generating: generating,
         same_seed: same_seed,
-        stylize: stylize
+        stylize: stylize,
+        tailored_palette: tailored_palette
     }
 
     fs.writeFile(config_file_path, JSON.stringify(config), 'utf8', (err) => 
@@ -222,8 +230,11 @@ function send_response(req, res, tree_asset)
     let stylize;
     (config_stylize != undefined) ? stylize = config_stylize : stylize = true;
 
+    let tailored_palette;
+    (config_tailored_palette != undefined) ? tailored_palette = config_tailored_palette : tailored_palette = true;
+
     // case for asset not existing is handled in main.html
-    res.render('main.html', { image_name: tree_asset, resolution: resolution, same_seed: same_seed, stylize: stylize });
+    res.render('main.html', { image_name: tree_asset, resolution: resolution, same_seed: same_seed, stylize: stylize, tailored_palette: false });
 }
 
 
@@ -243,4 +254,11 @@ function log_formatted_message(message)
 function log_formatted_error(message)
 {
     console.log("(" + get_formatted_time() + ")" + " >>>>>>>>>> " + message + " <<<<<<<<<<")
+}
+
+function catch_errors(error, stdout, stderr)
+{
+    if (error !== null) console.log(`exec error: ${error}`);
+        if (!release_mode) console.log(`stdout: ${stdout}`);
+        console.log(stderr);
 }
