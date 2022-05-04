@@ -58,26 +58,8 @@ RUN pip3 install numba
 RUN pip3 install -U scikit-learn
 RUN pip3 install -U scikit-image
 
-# RUN pip uninstall -y numpy
-# RUN python3 -m pip uninstall -y numpy
-# # RUN python3.6 -m pip uninstall -y numpy
-# # RUN pip3.7 uninstall -y numpy
-# RUN sudo apt purge -y python-numpy
-# RUN sudo apt purge -y python3-numpy
-# RUN sudo apt purge -y python3.6-numpy
-# RUN sudo apt purge -y python3-numpy
-# # RUN pip3 install --upgrade pip
-# RUN pip3 install -U numpy
-
 RUN pip3 install git+https://github.com/sedthh/pyxelate.git
 
 # Set a fixed model cache directory.
 ENV FVCORE_CACHE="/tmp"
 WORKDIR /home/appuser/detectron2_repo
-
-# run detectron2 under user "appuser":
-# wget http://images.cocodataset.org/val2017/000000439715.jpg -O input.jpg
-# python3 demo/demo.py  \
-	#--config-file configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml \
-	#--input input.jpg --output outputs/ \
-	#--opts MODEL.WEIGHTS detectron2://COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x/137849600/model_final_f10217.pkl

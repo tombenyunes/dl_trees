@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Linux
+
 export LC_ALL=C.UTF-8
 export LANG=C.UTF-8
 
@@ -18,5 +20,3 @@ python3 /scratch/gan/stylegan2-ada-pytorch/generate.py \
     --trunc=1 \
 	--network=/scratch/gan/models/network-snapshot-000000.pkl \
 	--seeds=${r}-$(($r + 100))
-	# --seeds=${r}
-	# --seeds=1-10

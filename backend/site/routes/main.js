@@ -1,14 +1,8 @@
 const { exec } = require('child_process');
-const path = require('path');
 const fs = require('fs');
 
 
-let release_mode = false;
-
-let refilling_buffer = false;
-
-let default_resolution = 8;
-
+// since the server is running in docker, paths can be absolute
 let gan_output_dir = '/scratch/gan/output/';
 let detectron_output_dir = '/scratch/detectron/output/';
 let pyxelate_output_dir = '/scratch/pyxelate/output/';
@@ -17,6 +11,8 @@ let gan_entry_point = 'python3 /scratch/backend/site/scripts/generate_image.py';
 let detectron_entry_point = 'python3 /scratch/detectron/TreeRecognition.py';
 let pyxelate_entry_point = 'python3.7 /scratch/pyxelate/Pyxelate.py';
 
+// to avoid unwanted messages filling up the terminal
+let release_mode = true;
 if (release_mode) 
 {
     gan_entry_point += ' 2> /dev/null';
@@ -25,10 +21,13 @@ if (release_mode)
 }
 
 let config_file_path = '/scratch/backend/site/config/config.json';
-let config_is_generating = true;
+let config_is_generating = false;
 let config_same_seed = false;
 let config_stylize = true;
 let config_tailored_palette = false;
+
+let refilling_buffer = false;
+let default_resolution = 8;
 
 
 
@@ -50,12 +49,12 @@ module.exports = function (app)
     // whenever 'generate tree' button is clicked
     app.post('/', async function (req, res)
     {
+        // update the config file with settings from the html form
+        await write_config_file(req.body.config_resolution, req.body.config_same_seed, req.body.config_stylize, req.body.config_tailored_palette);
+        
         // read the current state of the program
         // don't continue until file has finished being read
         await read_config_file();
-
-        // update the config file with settings from the html form
-        await write_config_file(req.body.config_resolution, req.body.config_same_seed, req.body.config_stylize, req.body.config_tailored_palette);
 
         // if an image is NOT currently being generated
         if (!config_is_generating)
@@ -72,7 +71,7 @@ module.exports = function (app)
             // otherwise, send previous image as response
             if (detectron_output_dir_files.length > 0)
             {
-                log_formatted_message("Started image stylization");
+                log_formatted_message("Started image stylization...");
 
                 let previous_image = detectron_output_dir_files[0];
                 let cur_image = detectron_output_dir_files[1];
@@ -133,9 +132,6 @@ function read_config_file()
             catch (error)
             {
                 config_is_generating = false;
-                config_same_seed = false;
-                config_stylize = true;
-                config_tailored_palette = false;
             }
 
             resolve();
@@ -143,7 +139,7 @@ function read_config_file()
     });
 }
 
-function write_config_file(_resolution, _same_seed, _style, _tailored_palette)
+function write_config_file(_resolution, _same_seed, _stylized, _tailored_palette)
 {
     // write settings from html form into config.json file
 
@@ -152,7 +148,7 @@ function write_config_file(_resolution, _same_seed, _style, _tailored_palette)
         let resolution = (_resolution == undefined) ? default_resolution : _resolution;
         let generating = (config_is_generating == undefined) ? false : config_is_generating;
         let same_seed = (_same_seed == undefined) ? false : true;
-        let stylize = (_style == undefined) ? false : true;
+        let stylize = (_stylized == undefined) ? false : true;
         let tailored_palette = (_tailored_palette == undefined) ? false : true;
 
         let config = 
@@ -199,7 +195,9 @@ function send_response(req, res, tree_asset)
     (req.body.config_resolution != undefined) ? resolution = req.body.config_resolution : resolution = default_resolution;
     (config_same_seed != undefined) ? same_seed = config_same_seed : same_seed = false;
     (config_stylize != undefined) ? stylize = config_stylize : stylize = true;
-    (config_tailored_palette != undefined) ? tailored_palette = config_tailored_palette : tailored_palette = true;
+    (config_tailored_palette != undefined) ? tailored_palette = config_tailored_palette : tailored_palette = false;
+
+    // console.log(config_same_seed);
 
     // send image name and vars
     res.render('main.html', { image_name: tree_asset, resolution: resolution, same_seed: same_seed, stylize: stylize, tailored_palette: tailored_palette });
@@ -209,7 +207,8 @@ function send_response(req, res, tree_asset)
 
 function refill_image_buffer()
 {
-    log_formatted_message("Refilling image buffer");
+    log_formatted_message("Refilling image buffer...");
+    
     refilling_buffer = true;
     let stylegan_start_seconds = get_seconds();
 

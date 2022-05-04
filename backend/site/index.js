@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // routes
-require('./routes/main/main')(app);
+require('./routes/main')(app);
 
 // views
 app.set('views', __dirname + '/views');

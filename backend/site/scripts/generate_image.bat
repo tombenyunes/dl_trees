@@ -1,4 +1,4 @@
-
+:: Windows
 
 :: Remove any images currently in the output directory
 cd ./gan

@@ -1,7 +1,8 @@
-# To Build (from root):
-# sudo docker build --build-arg USER_ID=$UID -t detectron2:v0 ./detectron/
+# To Build Image (from project root):
+# sudo docker build --build-arg USER_ID=$UID -t detectron2:v0 .
 
-# To Run
+echo "Docker Container Started. To exit, use the following command: 'sudo docker stop deep_learning_trees' from another terminal"
+
 docker run \
     --gpus all \
     --rm \
@@ -10,5 +11,5 @@ docker run \
     --env="DISPLAY" \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --network=host \
-    --name=detectron2 detectron2:v0 \
+    --name="deep_learning_trees" detectron2:v0 \
     $@

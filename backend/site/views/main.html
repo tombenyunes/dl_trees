@@ -12,8 +12,9 @@
 
 <body>
 
-	<img src="<%= image_name %>" alt="Image buffer appears to be empty. Please reload shortly, or restart the server." id="generated_image">	
+	<!-- ejs is used to pass variables back and forth -->
 
+	<img src="tree.png" alt="Image buffer appears to be empty. Please reload shortly, or restart the server." id="generated_image">	
 
 	<form method="POST" action="/loading" id="mainForm">
 		<input type="submit" value="Generate Tree" id="generate_button"/>
