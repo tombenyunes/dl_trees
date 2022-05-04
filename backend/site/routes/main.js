@@ -132,6 +132,9 @@ function read_config_file()
             catch (error)
             {
                 config_is_generating = false;
+                config_same_seed = false;
+                config_stylize = true;
+                config_tailored_palette = false;
             }
 
             resolve();
@@ -180,11 +183,11 @@ function no_new_image(req, res)
 {
     // send most recent image
     let pyxelate_output_dir_files = fs.readdirSync(pyxelate_output_dir);
-    send_response(req, res, pyxelate_output_dir_files[0])
+    send_response(req, res, pyxelate_output_dir_files[0], true)
 }
 
 // all responses pass through here
-function send_response(req, res, tree_asset)
+function send_response(req, res, tree_asset, uninit = false)
 {
     // send config settings back into the form so they don't need to be entered every time
     let resolution;
@@ -193,11 +196,10 @@ function send_response(req, res, tree_asset)
     let tailored_palette;
 
     (req.body.config_resolution != undefined) ? resolution = req.body.config_resolution : resolution = default_resolution;
-    (config_same_seed != undefined) ? same_seed = config_same_seed : same_seed = false;
-    (config_stylize != undefined) ? stylize = config_stylize : stylize = true;
-    (config_tailored_palette != undefined) ? tailored_palette = config_tailored_palette : tailored_palette = false;
-
-    // console.log(config_same_seed);
+    (req.body.config_same_seed != undefined) ? same_seed = req.body.config_same_seed : same_seed = false;
+    (req.body.config_stylize != undefined) ? stylize = req.body.config_stylize : stylize = false;
+    (req.body.config_tailored_palette != undefined) ? tailored_palette = req.body.config_tailored_palette : tailored_palette = false;
+    if (uninit) stylize = true;
 
     // send image name and vars
     res.render('main.html', { image_name: tree_asset, resolution: resolution, same_seed: same_seed, stylize: stylize, tailored_palette: tailored_palette });
