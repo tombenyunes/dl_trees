@@ -12,7 +12,7 @@
 **Instructions**
 
 ```.bash
-git clone https://gitlab.doc.gold.ac.uk/tbeny001/final_project
+git clone https://github.com/tombenyunes/final_project
 
 cd final_project
 
