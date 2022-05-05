@@ -9,5 +9,5 @@ docker run \
     --env="DISPLAY" \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --network=host \
-    --name="deep_learning_trees" detectron2:v0 \
+    --name="gan_trees" gan_trees:v0 \
     $@

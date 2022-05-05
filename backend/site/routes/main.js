@@ -69,7 +69,7 @@ module.exports = function (app)
 
             // if the image buffer contains images, stylize one and send it as a response
             // otherwise, send previous image as response
-            if (detectron_output_dir_files.length > 0)
+            if (detectron_output_dir_files.length > 1)
             {
                 log_formatted_message("Started image stylization...");
 
@@ -77,7 +77,7 @@ module.exports = function (app)
                 let cur_image = detectron_output_dir_files[1];
 
                 // when image stylization is complete
-                s = stylize_image(req, res, previous_image, cur_image);
+                s = stylize_image();
                 s.on('exit', function()
                 {
                     // send processed image as response
@@ -237,7 +237,7 @@ function refill_image_buffer()
     })
 }
 
-function stylize_image(req, res, previous_image, cur_image)
+function stylize_image()
 {
     // convert processed gan images into pixel-art
     let pyxelate_start_seconds = get_seconds();

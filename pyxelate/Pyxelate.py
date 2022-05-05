@@ -85,15 +85,14 @@ def read_input_images(input_dir):
 
 def stylize(image_index):
 
-  # either apply a predefined or custom tailored colour palette depending on user configuration
-  if (config_tailored_palette == False):
-    new_palette = Pyx(factor=config_resolution, palette=8, dither="naive", depth=1).fit(io.imread(green_palette_path))
-  else:
-    new_palette = Pyx(factor=config_resolution, palette=8, dither="naive").fit(input_image_arr[image_index])
-
-
   # if there is an image available to be stylized
-  if (len(input_image_arr) > 0):
+  if (len(input_image_arr) > 1):
+    # either apply a predefined or custom tailored colour palette depending on user configuration
+    if (config_tailored_palette == False):
+      new_palette = Pyx(factor=config_resolution, palette=8, dither="naive", depth=1).fit(io.imread(green_palette_path))
+    else:
+      new_palette = Pyx(factor=config_resolution, palette=8, dither="naive").fit(input_image_arr[image_index])
+
     new_image = new_palette.transform(input_image_arr[image_index])
 
     clear_dir(output_dir)
