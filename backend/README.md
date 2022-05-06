@@ -1,6 +1,3 @@
 **Backend**
 
-A Node API that exposes functionality to generated randomly seeded images.
-
-Requests:
-/api
+Contains everything related to the Node server, including views, routing logic, scripts, and the logic that decides how images are generated, batched, and removed.

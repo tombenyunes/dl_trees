@@ -81,10 +81,10 @@ module.exports = function (app)
                 s.on('exit', function()
                 {
                     // send processed image as response
-                    send_response(req, res, (config_same_seed) ? previous_image : cur_image)
+                    send_response(req, res, (req.body.config_same_seed) ? previous_image : cur_image)
 
                     // delete previous image (unless generating with the same seed)
-                    if (!config_same_seed)
+                    if (!req.body.config_same_seed)
                     {
                         let file_to_delete = detectron_output_dir + previous_image;
                         delete_image(file_to_delete);
