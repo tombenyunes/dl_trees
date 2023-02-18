@@ -23,7 +23,7 @@ npm install ./backend/site
 bash build_docker.sh
 ```
 
-Download the [gan model](https://drive.google.com/file/d/1ZtJD0Rw0W36YV0dr4viDRr-wzQ6B87pd/view?usp=sharing) and the [detectron model](https://drive.google.com/file/d/1OR_9EnyjhWV2QMo8-OHW7fz5BpSPbLFZ/view?usp=sharing) and place both in `./gan/models/` and `./detectron/models/` respectively
+Download the [gan model](https://drive.google.com/file/d/1gDp4UQKOgRNVAyxh3gbo03uVLZx45ysl/view?usp=share_link) and the [detectron model](https://drive.google.com/file/d/1Ltsb6FtjXKpwuMMUZN5-QIdI72yKaqaB/view?usp=share_link) and place both in `./gan/models/` and `./detectron/models/` respectively
 
 ```.bash
 sudo bash start_docker.sh
