@@ -2,6 +2,10 @@
 
 <img width="226" alt="banner" src="https://user-images.githubusercontent.com/58710165/231551944-aa331fce-f1a6-45bf-acff-95fb3034449f.png">
 
+## Demo
+
+https://youtu.be/7IlNw5rGgTg
+
 ## Details
 
 Research into using deep learning to create unique assets for digital media.  
